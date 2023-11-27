@@ -7,6 +7,8 @@ Survey link: https://resqhub-survey-y2mk2btioa-et.a.run.app/info
 ## Status
 ⚠️ REVOKED! We don't have enough users to satisfy our expectations. This survey app is abandoned. However, the link is still accessible.
 
+EOF
+
 
 
 
