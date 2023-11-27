@@ -1,7 +1,8 @@
+# Version 1-pre2
 ## 🤔 What
-This is an unstable version and this version comes after version ground zero.
-- Add API 1b backend.
-  API 1b is the API that is accountable for verifying new user.
+This is an unstable version and this version comes after version 1-pre1. 
+- Add API 1b backend (no longer publicly accessible (authorized))
+- Add API 1b frontend
 
 ## ℹ️ Status
 This version will be revoked in the future once version 1-pre2 is released.
@@ -14,12 +15,14 @@ This version will be revoked in the future once version 1-pre2 is released.
 		"email": "<USER-EMAIL>"
 	}' \
 	-H 'Content-Type: application/json' \
-	https://resqhub-api1b-backend-[unique]-et.a.run.app/build-vkey
+	https://resqhub-api1b-frontend-[unique]-et.a.run.app/build-vkey
 	```
 	Response (either one of these):
 	```bash
 	'{"status": "has-verified"}' #User has been verified
 	'{"status": "sent"}' #User verification key has been sent
+	'{"status": "no-body"}' #No payload
+	'{"status": "incomplete-body"}' #Incomplete payload
 	```
 	❓ **What this end-point does**: generating a 7-digit number verification key. The generated 7-digit number is hashed (slow hash: BCRYPT) using salt (10 rounds) and stored in the Firestore. With this feature, not even the admin of the Cloud Firestore may be able to get the user's verification key. The user will be emailed with the 7-digit number verification key to input in the mobile application. They will be given 5 minutes to fill in.
 	
@@ -31,7 +34,7 @@ This version will be revoked in the future once version 1-pre2 is released.
 		"vkey": "<VERIFICATION-KEY>"
 	}' \
 	-H 'Content-Type: application/json' \
-	https://resqhub-api1b-backend-[unique]-et.a.run.app/verif-vkey
+	https://resqhub-api1b-frontend-[unique]-et.a.run.app/verif-vkey
 	```
 	Response (either one of these):
 	```bash
@@ -40,5 +43,7 @@ This version will be revoked in the future once version 1-pre2 is released.
 	'{"status": "expired"}' #User verification key has expired
 	'{"status": "verified"}' #User is verified, proceed to data fill-out page
 	'{"status": "wrong"}' #User does not input the right verification key
+	'{"status": "no-body"}' #No payload
+	'{"status": "incomplete-body"}' #Incomplete payload
 	```
 	❓ **What this end-point does**: receiving ```vkey``` to verify it with the hashed verification key stored in the database (Cloud Firestore). If `vkey` + `hashing function` + `salt` = `hased vkey` , hence the verification key matches. Otherwise, it fails. 
