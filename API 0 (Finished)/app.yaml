@@ -1,0 +1,14 @@
+runtime: nodejs
+service: default
+env: flex
+#beta_settings:
+#  cloud_sql_instances: sg3-demos:asia-southeast2:tracker-db=tcp:3306
+runtime_config:
+  operating_system: ubuntu22
+manual_scaling:
+  instances: 3
+resources:
+  cpu: 2
+  memory_gb: 4
+  disk_size_gb: 10
+  

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="css-file"/>
+  </head>
+  <body>
+    <header>
+    </header>
+    <main>
+      <div class="simple-div">
+        <p style="text-align: center; font-family: 'ibmplex bold'; font-size: 3vh; margin: 0px 20px 20px 20px;">&#x1F232;<br>Input your email address.</p>
+        <p
+        style="max-width: 500px; text-align: center; font-family: 'ibmplex med'; font-size: 1.87vh; margin: 0px 20px 0px 20px;">Please make sure you correctly input your email address. We will mail you how to use this API and the API key for 10 credits.</p>
+        <input type="text" 
+        id="fEmail"
+        style="font-size: 1.87vh; margin-top: 10px; background-color: rgba(255, 255, 51, 0.09); color: white; font-family: ibmplex reg; border: 2px solid yellow;">
+        <button style="margin-top: 20px;" id="submit-button">&#x1F44C; Submit</button>
+        </div>
+      </div>
+    </main>
+    <footer>
+      <isr id="legalKeyHolder" key="{{legalKey}}"></isr>
+      <isr id="accuracy" pass="x"></isr>
+    </footer>
+    <script type="module" src="email-request"></script>
+  </body>
+</html>

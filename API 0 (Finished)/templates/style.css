@@ -1,0 +1,217 @@
+@font-face {
+  font-family: "ibmplex reg";
+  src: url("ibmplex-reg");
+}
+@font-face {
+  font-family: "ibmplex med";
+  src: url("ibmplex-med");
+}
+@font-face {
+  font-family: "ibmplex bold";
+  src: url("ibmplex-bold");
+}
+@font-face {
+  font-family: "philosopher bold";
+  src: url("philosopher-bold");
+}
+@font-face {
+  font-family: "museoModerno bold";
+  src: url("museoModerno-bold");
+}
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  border: 1px dashed yellow;
+}
+::-webkit-scrollbar-thumb {
+  background-color: yellow;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+table, th, td {
+  background-color: rgba(255, 255, 51, 0.035);
+  border: 1px solid yellow;
+  font-family: 'ibmplex reg'; 
+  font-size: 1.8vh;
+  color: white;
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  word-wrap: break-word;
+}
+html, body, main {
+  margin: 0px;
+  padding: 0px;
+  overflow-x: hidden;
+}
+
+a:link {
+  color: rgb(255, 244, 32);
+  font-family: 'ibmplex reg';
+}
+a:visited {
+  color: rgb(32, 210, 255);
+  font-family: 'ibmplex reg';
+}
+a:hover {
+  color: rgb(32, 255, 181);
+  font-family: 'ibmplex reg';
+}
+
+.main-div {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  background-image: radial-gradient(circle, #000000, #0b0307, #130710, #170c17, #18101e, #181320, #181523, #181725, #191823, #1a1921, #1b1b1e, #1c1c1c);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.second-div {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  background-color: #000000;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: safe center;
+}
+.third-div {
+  overflow-y: auto;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  background-image: radial-gradient(circle, #000000, #0b0506, #140a0c, #1b0e10, #201213, #221416, #231518, #25171b, #22191d, #1f1a1e, #1d1b1e, #1c1c1c);
+  flex-direction: column;
+  justify-content:safe center;
+  align-items: safe center;
+}
+.sub-third-div {
+  border: 1px solid yellow;
+  margin: 20px 0px 0px 0px;
+  overflow:auto;
+  width: 90%;
+  height: auto;
+  max-height: 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content:safe center;
+  align-items: safe center;
+}
+.detail-div {
+  overflow-y: auto;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  background-image: radial-gradient(circle, #000000, #0b0506, #140a0c, #1b0e10, #201213, #221416, #231518, #25171b, #22191d, #1f1a1e, #1d1b1e, #1c1c1c);
+  flex-direction: column;
+  justify-content:safe center;
+  align-items: safe center;
+}
+.sub-detail-div {
+  border: 1px solid rgba(255, 255, 0, 0.419);
+  width: 90%;
+  margin-top: 10px;
+  overflow-x: hidden;
+  height: auto;
+  max-height: 40%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content:safe center;
+  align-items: safe center;
+}
+.legend {
+  width: 90%;
+  margin-top: 10px;
+  overflow-x: hidden;
+  height: auto;
+  max-height: 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content:safe center;
+  align-items: safe center;
+}
+.show {
+  background-color: rgba(255, 255, 51, 0.09);
+  border-bottom: 1px solid rgba(255, 255, 0, 0.419);
+  padding: 5px 0px 5px 0px;
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content:safe center;
+  align-items: safe flex-start;
+}
+.show > p {
+  text-align: left; 
+  font-size: 1.87vh;
+  margin: 0px 10px 0px 10px;
+}
+div>p {
+  font-size: 6vh;
+  color: white;
+  margin: 0px;
+  font-family: "ibmplex reg";
+}
+
+button {
+  font-family: "ibmplex reg";
+  font-size: 1.87vh;
+  border: 1px solid yellow;
+  background-color: transparent;
+  color: rgb(255, 255, 255);
+  margin-left: 10px;
+  margin-bottom: 10px;
+}
+button:hover {
+  background-color: rgb(0, 255, 85,0);
+  color: yellow;
+}
+.reloadbutton {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+/* PART OF INFO */
+.sub-div {
+  border: 1px solid yellow;
+  margin: 0px 10px 0px 10px;
+  max-width: 500px;
+}
+.main-div-info {
+  background-image: linear-gradient(to top, #232300, #202200, #1d2101, #1a2001, #171f02, #101f07, #081e0d, #001d11, #001c19, #001a21, #001526, #000e26);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.second-div-info {
+  background-image: linear-gradient(to top, #150023, #00122d, #001c2d, #002227, #00271e, #022817, #09290e, #142900, #192700, #1d2600, #202400, #232300);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.simple-div {
+  background-color: black;
+  overflow-y: auto;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: safe center;
+}

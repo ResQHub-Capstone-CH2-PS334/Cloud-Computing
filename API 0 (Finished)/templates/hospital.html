@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="css-file"/>
+  </head>
+  <body>
+    <header>
+    </header>
+    <main>
+      <div class="second-div" id="second-div">
+        <p style="text-align: center; font-family: 'ibmplex bold'; font-size: 6vh; margin: 0px 20px 0px 20px;">&#x1F4CD;<br> Your Whereabouts</p>
+        <p 
+        id="ps"
+        style="text-align: center; font-family: 'ibmplex med'; font-size: 2.3vh; margin: 20px 0px 0px 0px;">We're looking for you...</p>
+        <div class="sub-detail-div" id="detailaddr-div-id">
+        </div>
+      </div>
+      <div class="simple-div">
+        <p style="text-align: center; font-family: 'ibmplex bold'; font-size: 6vh; margin: 0px 20px 0px 20px;">&#x1F6DF;<br>Hospitals</p>
+        <p
+        style="text-align: center; font-family: 'ibmplex med'; font-size: 2vh; margin: 0px 20px 0px 20px;">(with phone number provided)</p>
+        <p
+        id="sos-callable" 
+        style="max-width: 500px; text-align: center; font-family: 'ibmplex med'; font-size: 2.3vh; margin: 20px 20px 0px 20px;">We're looking for you...</p>
+        <div class="sub-detail-div" id="detailsos-div-id">
+        </div>
+        <div class="legend" id="sos-legend">
+
+        </div>
+      </div>
+      <div class="simple-div">
+        <p style="text-align: center; font-family: 'ibmplex bold'; font-size: 6vh; margin: 0px 20px 0px 20px;"><br>Hospitals</p>
+        <p
+        style="text-align: center; font-family: 'ibmplex med'; font-size: 2vh; margin: 0px 20px 0px 20px;">(without phone number provided)</p>
+        <p 
+        id="sos-uncallable"
+        style="max-width: 500px; text-align: center; font-family: 'ibmplex med'; font-size: 2.3vh; margin: 20px 20px 0px 20px;">We're looking for you...</p>
+        <div class="sub-detail-div" id="detail-div-id">
+        </div>
+      </div>
+      <div class="simple-div" id="simple-div-0">
+        <p style="text-align: center; font-family: 'ibmplex bold'; font-size: 6vh; margin: 0px 20px 0px 20px;">&#x1F5D2;<br> Summary</p>
+        <p 
+        id="sos"
+        style="text-align: center; font-family: 'ibmplex med'; font-size: 1.8vh; margin: 20px 0px 0px 0px;">To submit, please give your vote first.</p>
+        <div class="sub-detail-div" id="detailsum-div-id">
+        </div>
+        <button style="margin-top: 20px; visibility: hidden;" id="submit-button">&#x1F44C; Submit</button>
+      </div>
+    </main>
+    <footer>
+      <isr id="legalKeyHolder" key="{{legalKey}}"></isr>
+      <isr id="accuracy" pass="x"></isr>
+    </footer>
+    <script>
+      const STATIONTYPE = "{{stationType}}"
+    </script>
+    <script type="module" src="side-js"></script>
+  </body>
+</html>
