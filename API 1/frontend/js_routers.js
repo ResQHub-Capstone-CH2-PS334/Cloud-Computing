@@ -17,6 +17,16 @@ const routers = [
     handler: methods.verifvkey
   },
   {
+    method: 'GET',
+    path: '/jwt-experiment',
+    handler: methods.jwtExperiment
+  },
+  {
+    method: 'POST',
+    path: '/jwt-endpoint',
+    handler: methods.jwtEndPoint
+  },
+  {
     method: 'POST',
     path: '/encrypt-userconfig',
     handler: methods.encryptUserConfig,

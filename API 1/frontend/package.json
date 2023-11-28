@@ -15,6 +15,7 @@
     "@hapi/hapi": "^21.3.2",
     "crypto-js": "^4.2.0",
     "googleapis": "^128.0.0",
+    "jsonwebtoken": "^9.0.2",
     "node-fetch": "^1.7.3"
   },
   "devDependencies": {
