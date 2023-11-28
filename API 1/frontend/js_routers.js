@@ -15,6 +15,18 @@ const routers = [
     method: 'POST',
     path: '/verif-vkey',
     handler: methods.verifvkey
+  },
+  {
+    method: 'POST',
+    path: '/encrypt-userconfig',
+    handler: methods.encryptUserConfig,
+    options: {
+      payload: {
+        output: 'data',
+        parse: true,
+        multipart: true
+      }
+    }
   }
 ]
 

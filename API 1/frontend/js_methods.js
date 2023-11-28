@@ -3,6 +3,7 @@ const __backendProtocol = 'https'
 const __backendUrl = 'api1b-be-y2mk2btioa-et.a.run.app'
 const __fullUrl = `${__backendProtocol}://${__backendUrl}`
 const { google } = require('googleapis')
+const cjs = require('crypto-js')
 
 const __getToken__ = async (url) => {
   const jwtClient = new google.auth.JWT(
@@ -60,8 +61,14 @@ const __verifvkey = async (req, h) => {
   return h.response(fJSON)
 }
 
+const __encryptUserConfig = async (req, h) => {
+  const hash = cjs.SHA256('oi').toString()
+  return h.response(hash)
+}
+
 module.exports = {
   default: __default,
   buildvkey: __buildvkey,
-  verifvkey: __verifvkey
+  verifvkey: __verifvkey,
+  encryptUserConfig: __encryptUserConfig
 }

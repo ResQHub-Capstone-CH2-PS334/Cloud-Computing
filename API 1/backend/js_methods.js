@@ -1,8 +1,9 @@
 const { initializeApp, cert } = require('firebase-admin/app')
 const { getFirestore } = require('firebase-admin/firestore')
-const bcrypt = require('bcryptjs')
 const nodemailer = require('nodemailer')
 const fs = require('fs/promises')
+const { nanoid } = require('nanoid')
+const cjs = require('crypto-js')
 
 const __serviceAccount = require('./keys/key-firestore.json')
 
@@ -88,7 +89,34 @@ const __mail__ = async (email, vkey, exp) => {
   })
 }
 
+const __hasher__ = {
+  hash: async function (__msg, __salt = null) {
+    let salt = nanoid(10)
+    if (__salt !== null) {
+      salt = __salt
+    }
+    const msg = `${salt}${__msg}`
+    const hashedMsg = salt + cjs.SHA256(msg).toString()
+    console.log('Salt h: ', hashedMsg.slice(0, 10), '.', salt)
+    return hashedMsg
+  },
+  compare: async function (__msg, __hashedMsg) {
+    const salt = __hashedMsg.slice(0, 10)
+    console.log('Salt c: ', salt)
+    const testHashedMsg = await __hasher__.hash(__msg, salt)
+    console.log(testHashedMsg)
+    if (testHashedMsg === __hashedMsg) {
+      return true
+    }
+    return false
+  }
+}
+
 const __default = async (req, h) => {
+  const h0 = await __hasher__.hash('He wants to fuck me hard')
+  console.log(h0)
+  const h1 = await __hasher__.compare('He wants to fuck me hard', h0)
+  console.log(h1)
   return 1
 }
 
@@ -106,7 +134,7 @@ const __buildvkey = async (req, h) => {
 
   __mail__(email, key, `${expirationDate.getHours()}:${expirationDate.getMinutes()}:${expirationDate.getSeconds}`)
   await collectionRef.write({
-    hashedKey: await bcrypt.hash(key, 8),
+    hashedKey: await __hasher__.hash(key),
     creationDate: new Date(),
     expirationDate,
     verified: false
@@ -127,7 +155,7 @@ const __verifvkey = async (req, h) => {
     console.log((await collectionRef.get('expirationDate'))._seconds)
     return h.response({ status: 'has-verified' })
   }
-  if (await bcrypt.compare(vkey, await collectionRef.get('hashedKey'))) {
+  if (await __hasher__.compare(vkey, await collectionRef.get('hashedKey'))) {
     if (now > (await collectionRef.get('expirationDate'))._seconds) {
       return h.response({ status: 'expired' })
     }

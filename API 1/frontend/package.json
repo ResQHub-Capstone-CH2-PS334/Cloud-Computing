@@ -13,6 +13,7 @@
   "dependencies": {
     "@google-cloud/pubsub": "^4.0.7",
     "@hapi/hapi": "^21.3.2",
+    "crypto-js": "^4.2.0",
     "googleapis": "^128.0.0",
     "node-fetch": "^1.7.3"
   },
