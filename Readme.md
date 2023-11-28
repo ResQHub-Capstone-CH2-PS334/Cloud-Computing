@@ -8,4 +8,4 @@ Version 1-pre2
 - Add API 1b frontend
 
 ## 🔥 Usage
-Still not stable.
+This version is not stable.
