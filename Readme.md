@@ -7,5 +7,8 @@ Version 1-pre2
 - Add API 1b backend (no longer publicly accessible (authorized))
 - Add API 1b frontend
 
+Version 1-pre1
+- Add API 1b backend (public access)
+
 ## 🔥 Usage
 Still not stable.
