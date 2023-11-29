@@ -4,6 +4,7 @@ const nodemailer = require('nodemailer')
 const fs = require('fs/promises')
 const { nanoid } = require('nanoid')
 const cjs = require('crypto-js')
+const signer = require('./js_signer')
 
 const __serviceAccount = require('./keys/key-firestore.json')
 
@@ -55,12 +56,11 @@ const __generateKey__ = async (size) => {
   return k
 }
 
-const __mail__ = async (email, vkey, exp) => {
+const __mail__ = async (email, vkey) => {
   const __htmlPath = './verifEmail.html'
 
   const __htmlBin = (await fs.readFile(__htmlPath, 'utf8'))
     .replace('xxx', vkey)
-    .replace('xxxx', exp)
 
   const __serviceEmail = 'raihansyah.harahap@gmail.com'
   const __servicePassword = 'qlpy bkwf vpjj revt'
@@ -113,10 +113,6 @@ const __hasher__ = {
 }
 
 const __default = async (req, h) => {
-  const h0 = await __hasher__.hash('He wants to fuck me hard')
-  console.log(h0)
-  const h1 = await __hasher__.compare('He wants to fuck me hard', h0)
-  console.log(h1)
   return 1
 }
 
@@ -132,11 +128,9 @@ const __buildvkey = async (req, h) => {
     return h.response({ status: 'has-verified' })
   }
 
-  __mail__(email, key, `${expirationDate.getHours()}:${expirationDate.getMinutes()}:${expirationDate.getSeconds}`)
+  __mail__(email, key)
   await collectionRef.write({
-    hashedKey: await __hasher__.hash(key),
-    creationDate: new Date(),
-    expirationDate,
+    tokenKey: await signer.signThis({ user: email }, key, 300),
     verified: false
   }, {})
   return h.response({
@@ -146,7 +140,6 @@ const __buildvkey = async (req, h) => {
 
 const __verifvkey = async (req, h) => {
   const { email, vkey } = req.payload
-  const now = (new Date()).getTime() / 1000
   const collectionRef = (await __fire__('userdata', email))
   if (!(await collectionRef.get()).exists) {
     return h.response({ status: 'not-exist' })
@@ -155,14 +148,19 @@ const __verifvkey = async (req, h) => {
     console.log((await collectionRef.get('expirationDate'))._seconds)
     return h.response({ status: 'has-verified' })
   }
-  if (await __hasher__.compare(vkey, await collectionRef.get('hashedKey'))) {
-    if (now > (await collectionRef.get('expirationDate'))._seconds) {
+
+  switch (await signer.apply(await collectionRef.get('tokenKey'), vkey)) {
+    case 'expired':
       return h.response({ status: 'expired' })
-    }
-    await collectionRef.write({ verified: true }, { merge: true })
-    return h.response({ status: 'verified' })
-  } else {
-    return h.response({ status: 'wrong' })
+    case 'authenticated':
+      await collectionRef.write({ verified: true }, { merge: true })
+      return h.response({ status: 'verified' })
+    case 'unauthenticated':
+      return h.response({ status: 'wrong' })
+    case 'malformed':
+      return h.response({ status: 'malformed' })
+    default:
+      return h.response({ status: 'unknown' })
   }
 }
 

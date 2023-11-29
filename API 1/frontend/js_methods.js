@@ -74,9 +74,22 @@ const __jwtEndPoint = async (req, h) => {
 }
 
 const __jwtExperiment = async (req, h) => {
-  const pp = { name: 'Maxwell', field: 'Physics!', xf: '1284', fd: '1287823', etc: '128472', wow: '12jeij23u9832cu932923um49cu3984m932u4c93um493u4c94m9u8093um4c9324' }
+  const pp = {
+    name: 'Maxwell',
+    field: 'Physics!',
+    xf: '1284',
+    fd: {
+      a: 12,
+      b: 13,
+      c: 8,
+      dm: {
+        a: 15,
+        b: 12
+      }
+    }
+  }
   const x = await signer.signThis(pp, '123', 120)
-  const y = await signer.apply('U2FsdGVkX18Ns9aKN7cwChxLdumzKLxM6neQ/eq4gX1NqwdPCju8jayUIkCg2uMpmIoi3Jjge7nQ0SXxZdFYIktE+WTZDuI6J0QdRP+3kZIbI3WOCQ5H2eYkv0ee8ApU93G9xUUHWOFwyQz4ys5uAoM1WANVdGz/Qw5lZLCOQe7OtQzHBaSD0fBtDq5PFD2Wkqt/fLMHzAnWy5xZ42L3Z8NvfhDADcDaN38lZBKic3cBPO9fuV9aCKz5INlO/2ab2+65x5yDc+dIP18TLdaf6oXk1d+F7erkQepYdQXl29uL7vuWqyEYKYyryTXYSi+6Hh9gCTsX5vL/KY2mT21+Zg/gGDfORvm3zZsK3i5Z3K/+WfhcsI1TspPvxwPYxSCKuDxtzd0dUgSMkPCQ5g5+HrhpX+1XN29jN8GwnPZ5P+j1mUJs/3nons4c0YfPKKJxTPBvdU9uh8sLBxIvoXXrSA==', '123')
+  const y = await signer.apply('resqhubU2FsdGVkX1+XerdtNnphQJyVEJrcPNTN47qNTvmf2UhhZAeU2vwB4xKaMXdWE5VKdj6lMRbA8HASYXF3iQM84PIHW/F0nAjg3SmZvA54cmATwA4NJPY3WSdzkNXu/h0m/YewZh+3DQ9A7vXfJ7kh6GasHcOdbEXnEpXAAbOoNMS1nGR6sbxligh3cTHO8J9PCqzO03b/ohtRNnY+aBAEsHtOaaani/3kWZk7jduNTZ5EoU1xPJ0cY3LMQ+7Qr+WY/U4FfRK+yIazyOMz9OkPnoh77vQus/IeutIbjsFSpb3NRFwpQOMe5CPbL8JOeFC3uzgW7Xyizz1YRNIt/6nsZUnMMpVIoNIhuaQUslGROwM=', '123')
   console.log(y)
   return x
 }

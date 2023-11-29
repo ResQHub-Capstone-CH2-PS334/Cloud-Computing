@@ -10,7 +10,7 @@ const signThis = async (__jsonData, __key, __duration = null) => {
   }
   const b64Data = btoa(JSON.stringify(jsonData))
   const signature = cjs.HmacSHA256(b64Data, __key)
-  return 'resqhub' + cjs.AES.encrypt(b64Data + ':' + signature, __SERVER_SUPERSECRET_KEY).toString()
+  return cjs.AES.encrypt('resqhub' + b64Data + ':' + signature, __SERVER_SUPERSECRET_KEY).toString()
 }
 
 const apply = async (__encryptedToken, __key) => {
