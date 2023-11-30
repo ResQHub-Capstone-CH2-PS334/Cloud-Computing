@@ -1,9 +1,7 @@
 const { initializeApp, cert } = require('firebase-admin/app')
-const { getFirestore } = require('firebase-admin/firestore')
+const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 const nodemailer = require('nodemailer')
 const fs = require('fs/promises')
-const { nanoid } = require('nanoid')
-const cjs = require('crypto-js')
 const signer = require('./js_signer')
 
 const __serviceAccount = require('./keys/key-firestore.json')
@@ -41,9 +39,20 @@ const __fire__ = (col, doc = null) => {
     // writes a content (object) into a document
     return await getFirestore().collection(col).doc(doc).set(content, option)
   }
+  const __delete = async (key) => {
+    // delete a document (if key is null) or a field
+    if (doc === null) return -1 // collection deletion is not allowed
+    if (key === null) {
+      return (await getFirestore().collection(col).doc(doc).delete())
+    }
+    return (await getFirestore().collection(col).doc(doc).update({
+      [key]: FieldValue.delete()
+    }))
+  }
   return {
     get: __get,
     write: __write,
+    delete: __delete,
     list: __list
   }
 }
@@ -89,29 +98,6 @@ const __mail__ = async (email, vkey) => {
   })
 }
 
-const __hasher__ = {
-  hash: async function (__msg, __salt = null) {
-    let salt = nanoid(10)
-    if (__salt !== null) {
-      salt = __salt
-    }
-    const msg = `${salt}${__msg}`
-    const hashedMsg = salt + cjs.SHA256(msg).toString()
-    console.log('Salt h: ', hashedMsg.slice(0, 10), '.', salt)
-    return hashedMsg
-  },
-  compare: async function (__msg, __hashedMsg) {
-    const salt = __hashedMsg.slice(0, 10)
-    console.log('Salt c: ', salt)
-    const testHashedMsg = await __hasher__.hash(__msg, salt)
-    console.log(testHashedMsg)
-    if (testHashedMsg === __hashedMsg) {
-      return true
-    }
-    return false
-  }
-}
-
 const __default = async (req, h) => {
   return 1
 }
@@ -119,18 +105,14 @@ const __default = async (req, h) => {
 const __buildvkey = async (req, h) => {
   const { email } = req.payload
   const key = await __generateKey__(7)
-  console.log(key)
-  const expirationDate = new Date()
-  expirationDate.setMinutes(expirationDate.getMinutes() + 5)
-  const collectionRef = await __fire__('userdata', email)
-
+  const collectionRef = await __fire__('userdata', await signer.simpleHash(email))
   if ((await collectionRef.get()).exists && await collectionRef.get('verified')) {
-    return h.response({ status: 'has-verified' })
+    return h.response({ status: 'already-verified' })
   }
-
-  __mail__(email, key)
+  console.log(key + '.')
+  // __mail__(email, key)
   await collectionRef.write({
-    tokenKey: await signer.signThis({ user: email }, key, 300),
+    tokenKey: await signer.signThis({ user: email }, key.toString(), 15),
     verified: false
   }, {})
   return h.response({
@@ -140,20 +122,20 @@ const __buildvkey = async (req, h) => {
 
 const __verifvkey = async (req, h) => {
   const { email, vkey } = req.payload
-  const collectionRef = (await __fire__('userdata', email))
+  const collectionRef = (await __fire__('userdata', await signer.simpleHash(email)))
   if (!(await collectionRef.get()).exists) {
     return h.response({ status: 'not-exist' })
   }
   if (await collectionRef.get('verified')) {
-    console.log((await collectionRef.get('expirationDate'))._seconds)
-    return h.response({ status: 'has-verified' })
+    return h.response({ status: 'already-verified' })
   }
-
-  switch (await signer.apply(await collectionRef.get('tokenKey'), vkey)) {
+  const apply = await signer.apply(await collectionRef.get('tokenKey'), vkey)
+  switch (apply.status) {
     case 'expired':
       return h.response({ status: 'expired' })
     case 'authenticated':
       await collectionRef.write({ verified: true }, { merge: true })
+      await collectionRef.delete('tokenKey')
       return h.response({ status: 'verified' })
     case 'unauthenticated':
       return h.response({ status: 'wrong' })
@@ -164,16 +146,39 @@ const __verifvkey = async (req, h) => {
   }
 }
 
+const __signUser = async (req, h) => {
+  const payloads = req.payload
+  const collectionRef = await __fire__('userdata', await signer.simpleHash(payloads.email))
+  if (!(await collectionRef.get()).exists) {
+    return h.response({ status: 'not-exist' })
+  }
+  if (await collectionRef.get('verified') === false) {
+    return h.response({ status: 'unverified' })
+  }
+  if (payloads.appDefaultKey !== signer.__SUPERSECRET_KEYS.__APPDEFAULT) {
+    return h.response({ status: 'illegal' })
+  }
+  if (await collectionRef.get('hUART') !== undefined) {
+    // return h.response({ status: 'already-signed' })
+  }
+  const userCoreData = {
+    usrn: await signer.simpleHash(payloads.username, 512, 'default'),
+    pswd: await signer.simpleHash(payloads.password, 512, 'default')
+  }
+  const userAdditionalData = {
+    fuln: payloads.fullName,
+    id: payloads.id,
+    brth: payloads.birth
+  }
+  console.log(await signer.compareHash(payloads.username, userCoreData.usrn, 256))
+  const { UART, hUART } = await signer.signUART(payloads.email, payloads.username)
+  await collectionRef.write({ hUART }, { merge: true })
+  return h.response({ status: 'signed', data: userCoreData })
+}
+
 module.exports = {
   default: __default,
   buildvkey: __buildvkey,
-  verifvkey: __verifvkey
+  verifvkey: __verifvkey,
+  signUser: __signUser
 }
-
-/* SAMPLES
-* To create verification key for new user
-* curl -X POST -H "Content-Type: application/json" -d '{"email": "raihansyah.harahap@gmail.com"}' localhost:9000/build-verif-key
-*
-* New user verifies their key
-* curl -X POST -H "Content-Type: application/json" -d '{"email": "raihansyah.harahap@gmail.com", "verifKey": "7038547"}' localhost:9000/verify-key
-*/
