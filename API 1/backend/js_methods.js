@@ -170,7 +170,7 @@ const __signUser = async (req, h) => {
     id: payloads.id,
     brth: payloads.birth
   }
-  console.log(await signer.compareHash(payloads.username, userCoreData.usrn, 256))
+
   const { UART, hUART } = await signer.signUART(payloads.email, payloads.username)
   await collectionRef.write({ hUART }, { merge: true })
   return h.response({ status: 'signed', data: userCoreData })
