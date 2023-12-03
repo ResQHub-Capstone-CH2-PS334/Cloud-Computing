@@ -63,7 +63,8 @@ const signUART = async (userPayload) => {
 const applyUART = async (UART) => {
   return await apply(UART, __SUPERSECRET_KEYS.__HMACSHAKEY)
 }
-const simpleHash = async (__txt, mode = 256, salting = 'nosalt') => {
+
+const simpleHash = async (__txt, salting = 'nosalt', mode = 256) => {
   const salt =
   (salting === 'default')
     ? nanoid(8)
@@ -91,10 +92,10 @@ const simpleHash = async (__txt, mode = 256, salting = 'nosalt') => {
   }
 }
 
-const compareHash = async (__txt, __hash, mode = 224) => {
+const compareHash = async (__txt, __hash, mode = 256) => {
   const hash = safeB64('dec', __hash)
   const salt = (hash.split('.').length === 2) ? hash.split('.')[0] : ''
-  const vhash = safeB64('dec', await simpleHash(__txt, mode, salt))
+  const vhash = safeB64('dec', await simpleHash(__txt, salt, mode))
   if (vhash === hash) return true
   return false
 }

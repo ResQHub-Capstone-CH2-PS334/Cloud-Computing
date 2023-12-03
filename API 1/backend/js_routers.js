@@ -37,6 +37,11 @@ const routers = [
     handler: methods.viewUserPrivateData
   },
   {
+    method: 'POST',
+    path: '/user-updatepassword',
+    handler: methods.userUpdatePassword
+  },
+  {
     method: 'GET',
     path: '/m',
     handler: async function (req, h) {

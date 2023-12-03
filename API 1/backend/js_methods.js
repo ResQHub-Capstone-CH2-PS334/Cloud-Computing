@@ -34,7 +34,7 @@ const __default = async (req, h) => {
 const __buildvkey = async (req, h) => {
   const { email } = req.payload
   const key = await __generateKey__(7)
-  const collectionRef = await fire('verifdata', await signer.simpleHash(email, 256))
+  const collectionRef = await fire('verifdata', await signer.simpleHash(email))
   if ((await collectionRef.get()).exists && await collectionRef.get('registered')) {
     return h.response({ status: 'already-registered' })
   }
@@ -69,7 +69,7 @@ const __buildvkey = async (req, h) => {
 
 const __verifvkey = async (req, h) => {
   const { email, vkey } = req.payload
-  const hashedEmail = await signer.simpleHash(email, 256)
+  const hashedEmail = await signer.simpleHash(email)
   const collectionRef = await fire('verifdata', hashedEmail)
   const isAvaibable = (await collectionRef.get()).exists
 
@@ -121,8 +121,8 @@ const __signUser = async (req, h) => {
   }
 
   const payloads = req.payload
-  const hUsername = await signer.simpleHash(payloads.username, 256)
-  const hEmail = await signer.simpleHash(payloads.email, 256)
+  const hUsername = await signer.simpleHash(payloads.username)
+  const hEmail = await signer.simpleHash(payloads.email)
   const ticket = await signer.apply(payloads.ticket, TICKETKEY)
 
   if (ticket.status !== 'authenticated' || payloads.email !== ticket.data.email) {
@@ -131,7 +131,7 @@ const __signUser = async (req, h) => {
     })
   }
 
-  const pswd = await signer.simpleHash(payloads.password, 512, 'default')
+  const pswd = await signer.simpleHash(payloads.password, 'default', 512)
   const userDataRef = await fire('userdata', hUsername)
   const verifDataRef = await fire('verifdata', hEmail)
 
@@ -155,7 +155,7 @@ const __signUser = async (req, h) => {
   const write = {
     userPrivateData,
     pswd,
-    activeSession: await signer.simpleHash(activeSession, 256, 'default'),
+    activeSession: await signer.simpleHash(activeSession, 'default'),
     email: encryptedEmail
   }
 
@@ -188,7 +188,7 @@ const __userLogin = async (req, h) => {
   }
   const { username, password } = req.payload
 
-  const hUsrn = await signer.simpleHash(username, 256)
+  const hUsrn = await signer.simpleHash(username)
   const user = await fire('userdata', hUsrn)
 
   if (!(await user.get()).exists) {
@@ -198,18 +198,25 @@ const __userLogin = async (req, h) => {
     return h.response({ status: 'already-logged-in' })
   }
 
-  const isPswdMatch = await signer.compareHash(password, await user.get('pswd'), 512, 'default')
+  const isPswdMatch = await signer.compareHash(password, await user.get('pswd'), 512)
   if (isPswdMatch) {
     const activeSession = nanoid(32)
-    const hActiveSession = await signer.simpleHash(activeSession, 256, 'default')
+    const hActiveSession = await signer.simpleHash(activeSession, 'default', 256)
     const updatedUserPrivateData = await signer.cipherUpdateKey(
-      user.get('userPrivateData'),
+      await user.get('userPrivateData'),
+      DBMANAGEDKEY,
+      activeSession
+    )
+
+    const updatedEmail = await signer.cipherUpdateKey(
+      await user.get('email'),
       DBMANAGEDKEY,
       activeSession
     )
 
     user.write({ userPrivateData: updatedUserPrivateData }, { merge: true })
     user.write({ activeSession: hActiveSession }, { merge: true })
+    user.write({ email: updatedEmail }, { merge: true })
 
     console.log(activeSession)
     const UART = await signer.signUART({ username, activeSession })
@@ -225,12 +232,12 @@ const __userLogin = async (req, h) => {
   RETURNS
     - {status: illegal}
       accessing with the illegal request
-    - {status: invalid}
-      invalid username/password
-    - {status: already-logged-in}
-      the requested username has logged in
-    - {status: logged-in}
-      successfull logged in
+    - {status: invalid/session-mismatch}
+      corrupted UART
+    - {status: already-logged-out}
+      the requested username has logged out
+    - {status: logged-out}
+      successfully logged out
 */
 
 const __userLogout = async (req, h) => {
@@ -240,7 +247,7 @@ const __userLogout = async (req, h) => {
 
   const { UART } = req.payload
   const jsonUART = await signer.applyUART(UART)
-  const hUsername = await signer.simpleHash(jsonUART.data.username, 256)
+  const hUsername = await signer.simpleHash(jsonUART.data.username)
   const collectionRef = await fire('userdata', hUsername)
   const activeSession0 = jsonUART.data.activeSession
   const activeSession1 = await collectionRef.get('activeSession')
@@ -253,7 +260,8 @@ const __userLogout = async (req, h) => {
   if (await collectionRef.get('activeSession') === 'no-session') {
     return h.response({ status: 'already-logged-out' })
   }
-  if (!(await signer.compareHash(activeSession0, activeSession1, 256))) {
+
+  if (!(await signer.compareHash(activeSession0, activeSession1))) {
     return h.response({ status: 'session-mismatch' })
   }
 
@@ -279,7 +287,24 @@ const __userLogout = async (req, h) => {
 }
 
 const __userUpdatePassword = async (req, h) => {
+  const { UART, oldPassword, newPassword } = req.payload
+  const jsonUART = await signer.applyUART(UART)
 
+  if (jsonUART.status !== 'authenticated') {
+    h.response({ status: 'invalid' })
+  }
+
+  const hUsername = await signer.simpleHash(jsonUART.data.username)
+  const userDataRef = await fire('userdata', hUsername)
+  const hPassword = await userDataRef.get('pswd')
+  const isEqu = await signer.compareHash(oldPassword, hPassword, 512)
+  const hNewPassword = await signer.simpleHash(newPassword, 'default', 512)
+
+  if (isEqu) {
+    userDataRef.write({ pswd: hNewPassword }, { merge: true })
+    return h.response({ status: 'password-updated' })
+  }
+  return h.response({ status: 'invalid' })
 }
 
 const __viewUserPrivateData = async (req, h) => {
@@ -288,18 +313,18 @@ const __viewUserPrivateData = async (req, h) => {
   if (jsonUART.status !== 'authenticated') {
     return h.response({ status: jsonUART.status })
   }
-  const collectionRef = await fire('userdata', await signer.simpleHash(jsonUART.data.username, 256))
+  console.log(jsonUART)
+  const collectionRef = await fire('userdata', await signer.simpleHash(jsonUART.data.username))
   if (
     !await signer.compareHash(
       jsonUART.data.activeSession,
-      await collectionRef.get('activeSession'),
-      256
+      await collectionRef.get('activeSession')
     )
   ) {
     return h.response({ status: 'invalid' })
   }
   try {
-    console.log(await signer.simpleDecrypt(await collectionRef.get('email'), jsonUART.data.activeSession))
+    console.log('.', await signer.simpleDecrypt(await collectionRef.get('email'), jsonUART.data.activeSession))
   } catch (e) {
     console.log(e)
   }
