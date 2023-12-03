@@ -99,12 +99,14 @@ const compareHash = async (__txt, __hash, mode = 224) => {
   return false
 }
 
-const simpleEncrypt = async (__jsonData, __pwd) => {
-  return cjs.AES.encrypt(btoa(JSON.stringify(__jsonData)), __pwd).toString()
+const simpleEncrypt = async (__plain, __pwd) => {
+  return cjs.AES.encrypt(btoa(
+    (typeof __plain === 'object') ? JSON.stringify(__plain) : __plain
+  ), __pwd).toString()
 }
 
-const simpleDecrypt = async (__jsonEncrypt, __pwd) => {
-  return atob(cjs.AES.decrypt(__jsonEncrypt, __pwd).toString(cjs.enc.Utf8))
+const simpleDecrypt = async (__cipher, __pwd) => {
+  return atob(cjs.AES.decrypt(__cipher, __pwd).toString(cjs.enc.Utf8))
 }
 
 const cipherUpdateKey = async (__cipher, __oldKey, __newKey) => {

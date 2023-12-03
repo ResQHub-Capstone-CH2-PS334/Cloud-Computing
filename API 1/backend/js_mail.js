@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer')
 const fs = require('fs/promises')
 
-const mail = async (email, vkey) => {
+const mailVerificaionKey = async (email, vkey) => {
   const __htmlPath = './verifEmail.html'
 
   const __htmlBin = (await fs.readFile(__htmlPath, 'utf8'))
@@ -34,4 +34,4 @@ const mail = async (email, vkey) => {
   })
 }
 
-module.exports = mail
+module.exports = { mailVerificaionKey }
