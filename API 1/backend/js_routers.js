@@ -22,6 +22,21 @@ const routers = [
     handler: methods.signUser
   },
   {
+    method: 'POST',
+    path: '/user-login',
+    handler: methods.userLogin
+  },
+  {
+    method: 'POST',
+    path: '/user-logout',
+    handler: methods.userLogout
+  },
+  {
+    method: 'POST',
+    path: '/view-userprivatedata',
+    handler: methods.viewUserPrivateData
+  },
+  {
     method: 'GET',
     path: '/m',
     handler: async function (req, h) {
