@@ -12,21 +12,20 @@ const __SUPERSECRET_KEYS = {
 const TOKENCRYPT = 'kcTRA7prpdN_plYmoZHz1L7V6N1lP61t'
 const HMACSHAKEY = '381n248392rnd71usuida92_29jfi3nf'
 
-const STATUSLIB = {
-  foreign: 'foreign token',
-  expired: 'expired token',
-  invalid: 'invalid token',
-  mismatch: 'mismatch text and hashed text',
-  unknown: 'unidentified error',
-  illegal: 'illegal request'
-}
-
 class SignerError extends Error {
   constructor (__funcitonName, __status) {
     super()
+    this.STATUSLIB = {
+      foreign: 'foreign token',
+      expired: 'expired token',
+      invalid: 'invalid token',
+      mismatch: 'mismatch text and hashed text',
+      unknown: 'unidentified error',
+      illegal: 'illegal request'
+    }
     this.funcitonName = __funcitonName
     this.status = __status
-    this.description = STATUSLIB[__status]
+    this.description = this.STATUSLIB[__status]
   }
 
   readError () {
