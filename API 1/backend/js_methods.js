@@ -15,6 +15,11 @@ const __generateKey__ = async (size) => {
   return k
 }
 
+const isLegal = (req) => {
+  if (req.headers.appkey !== APPKEY) throw new signer.SignerError('isLegal', 'illegal')
+  return true
+}
+
 const __default = async (req, h) => {
   return 1
 }
@@ -36,12 +41,12 @@ const __buildvkey = async (req, h) => {
   const key = await __generateKey__(7)
   const collectionRef = await fire('verifdata', await signer.simpleHash(email))
   if ((await collectionRef.get()).exists && await collectionRef.get('registered')) {
-    return h.response({ status: 'already-registered' })
+    return h.response({ status: 'already registered' })
   }
   console.log(key)
   // __mail__(email, key)
   await collectionRef.write({
-    tokenKey: signer.signThis({ user: email }, key.toString(), 15),
+    tokenKey: signer.signThis({ user: email }, key.toString(), 30),
     registered: false
   }, {})
   return h.response({
@@ -73,13 +78,15 @@ const __verifvkey = async (req, h) => {
   const collectionRef = await fire('verifdata', hashedEmail)
   const isAvaibable = (await collectionRef.get()).exists
 
-  if (!isAvaibable) { return h.response({ status: 'not-exist' }) }
-  if (await collectionRef.get('registered')) {
-    return h.response({ status: 'email-taken' })
-  }
+  if (!isAvaibable) return h.response({ status: 'not exist' })
+
+  const collectionRefData = await collectionRef.get(['registered', 'tokenKey'])
+  const isRegistered = collectionRefData.registered
+
+  if (isRegistered) return h.response({ status: 'email taken' })
 
   try {
-    signer.apply(await collectionRef.get('tokenKey'), vkey)
+    signer.apply(collectionRefData.tokenKey, vkey)
     const ticket = await signer.signThis({ email }, TICKETKEY, 3600)
     return h.response({ status: 'verified', ticket })
   } catch (e) {
@@ -112,55 +119,55 @@ const __verifvkey = async (req, h) => {
 */
 
 const __signUser = async (req, h) => {
-  if (req.headers.appkey !== APPKEY) {
-    return h.response({ status: 'illegal' })
-  }
-
   const payloads = req.payload
-  const hUsername = await signer.simpleHash(payloads.username)
-  const hEmail = await signer.simpleHash(payloads.email)
-  const ticket = await signer.apply(payloads.ticket, TICKETKEY)
+  const hUsername = signer.simpleHash(payloads.username)
+  const hEmail = signer.simpleHash(payloads.email)
 
-  if (!ticket.status || payloads.email !== ticket.data.email) {
-    return h.response({
-      status: (ticket.status === 'expired') ? 'expired' : 'invalid'
+  try {
+    isLegal(req)
+    signer.apply(payloads.ticket, TICKETKEY)
+
+    const pswd = signer.simpleHash(payloads.password, 'default', 512)
+    const userDataRef = await fire('userdata', hUsername)
+    const verifDataRef = await fire('verifdata', hEmail) // registered
+    const isExistEmail = (await verifDataRef.get()).exists
+
+    if (!isExistEmail) {
+      return h.response({ status: 'email missing' })
+    } else if (await verifDataRef.get('registered')) {
+      return h.response({ status: 'used email' })
+    } else if ((await userDataRef.get()).exists) {
+      return h.response({ status: 'used username' })
+    }
+
+    const activeSession = nanoid(32)
+    const encryptedEmail = signer.simpleEncrypt(payloads.email, activeSession)
+    const userPrivateData = signer.simpleEncrypt({
+      fuln: payloads.fullName,
+      id: payloads.id,
+      brth: payloads.birth
+    }, activeSession)
+    const UART = signer.signUART({
+      username: payloads.username,
+      activeSession
     })
+    const write = {
+      userPrivateData,
+      pswd,
+      activeSession: signer.simpleHash(activeSession, 'default'),
+      email: encryptedEmail
+    }
+
+    await userDataRef.write(write, { merge: true })
+    await verifDataRef.write({ registered: true })
+    await verifDataRef.delete('tokenKey')
+    console.log(activeSession)
+
+    return h.response({ status: 'signed', UART })
+  } catch (e) {
+    console.log(e)
+    return h.response(e.readError())
   }
-
-  const pswd = await signer.simpleHash(payloads.password, 'default', 512)
-  const userDataRef = await fire('userdata', hUsername)
-  const verifDataRef = await fire('verifdata', hEmail)
-
-  if (await verifDataRef.get('registered')) {
-    return h.response({ status: 'used-email' })
-  } else if ((await userDataRef.get()).exists) {
-    return h.response({ status: 'used-username' })
-  }
-
-  const activeSession = nanoid(32)
-  const encryptedEmail = await signer.simpleEncrypt(payloads.email, activeSession)
-  const userPrivateData = await signer.simpleEncrypt({
-    fuln: payloads.fullName,
-    id: payloads.id,
-    brth: payloads.birth
-  }, activeSession)
-  const UART = await signer.signUART({
-    username: payloads.username,
-    activeSession
-  })
-  const write = {
-    userPrivateData,
-    pswd,
-    activeSession: await signer.simpleHash(activeSession, 'default'),
-    email: encryptedEmail
-  }
-
-  await userDataRef.write(write, { merge: true })
-  await verifDataRef.write({ registered: true })
-  await verifDataRef.delete('tokenKey')
-  console.log(activeSession)
-
-  return h.response({ status: 'signed', UART })
 }
 
 /*
@@ -179,46 +186,47 @@ const __signUser = async (req, h) => {
 */
 
 const __userLogin = async (req, h) => {
-  if (req.headers.appkey !== APPKEY) {
-    return h.response({ status: 'illegal' })
+  try {
+    isLegal(req)
+    const { username, password } = req.payload
+
+    const hUsrn = signer.simpleHash(username)
+    const user = await fire('userdata', hUsrn)
+
+    if (!(await user.get()).exists) {
+      return h.response({ status: 'unrecognized' })
+    }
+    if (await user.get('activeSession') !== 'no-session') {
+      return h.response({ status: 'already logged in' })
+    }
+
+    const isPswdMatch = signer.compareHash(password, await user.get('pswd'), 512)
+    if (isPswdMatch) {
+      const activeSession = nanoid(32)
+      const hActiveSession = await signer.simpleHash(activeSession, 'default', 256)
+      const updatedUserPrivateData = await signer.cipherUpdateKey(
+        await user.get('userPrivateData'),
+        DBMANAGEDKEY,
+        activeSession
+      )
+
+      const updatedEmail = await signer.cipherUpdateKey(
+        await user.get('email'),
+        DBMANAGEDKEY,
+        activeSession
+      )
+
+      user.write({ userPrivateData: updatedUserPrivateData }, { merge: true })
+      user.write({ activeSession: hActiveSession }, { merge: true })
+      user.write({ email: updatedEmail }, { merge: true })
+
+      console.log(activeSession)
+      const UART = await signer.signUART({ username, activeSession })
+      return h.response({ status: 'logged in', UART })
+    }
+  } catch (e) {
+    return h.response(e.readError())
   }
-  const { username, password } = req.payload
-
-  const hUsrn = await signer.simpleHash(username)
-  const user = await fire('userdata', hUsrn)
-
-  if (!(await user.get()).exists) {
-    return h.response({ status: 'invalid' })
-  }
-  if (await user.get('activeSession') !== 'no-session') {
-    return h.response({ status: 'already-logged-in' })
-  }
-
-  const isPswdMatch = await signer.compareHash(password, await user.get('pswd'), 512)
-  if (isPswdMatch) {
-    const activeSession = nanoid(32)
-    const hActiveSession = await signer.simpleHash(activeSession, 'default', 256)
-    const updatedUserPrivateData = await signer.cipherUpdateKey(
-      await user.get('userPrivateData'),
-      DBMANAGEDKEY,
-      activeSession
-    )
-
-    const updatedEmail = await signer.cipherUpdateKey(
-      await user.get('email'),
-      DBMANAGEDKEY,
-      activeSession
-    )
-
-    user.write({ userPrivateData: updatedUserPrivateData }, { merge: true })
-    user.write({ activeSession: hActiveSession }, { merge: true })
-    user.write({ email: updatedEmail }, { merge: true })
-
-    console.log(activeSession)
-    const UART = await signer.signUART({ username, activeSession })
-    return h.response({ status: 'logged-in', UART })
-  }
-  return h.response({ status: 'invalid' })
 }
 
 /*
@@ -237,49 +245,51 @@ const __userLogin = async (req, h) => {
 */
 
 const __userLogout = async (req, h) => {
-  if (req.headers.appkey !== APPKEY) {
-    return h.response({ status: 'illegal' })
+  try {
+    isLegal(req)
+    const { UART } = req.payload
+    const jsonUART = signer.applyUART(UART)
+    const hUsername = signer.simpleHash(jsonUART.username)
+    const collectionRef = await fire('userdata', hUsername)
+
+    if (!(await collectionRef.get()).exists) {
+      return h.response({ status: 'unreachable username' })
+    }
+
+    const collectionRefData = await collectionRef.get(['activeSession', 'email', 'userPrivateData'])
+    const activeSession0 = jsonUART.activeSession
+    const activeSession1 = collectionRefData.activeSession
+    const eEmail = collectionRefData.email
+    const eUserPrivateData = collectionRefData.userPrivateData
+
+    if (await collectionRef.get('activeSession') === 'no-session') {
+      return h.response({ status: 'already logged out' })
+    }
+
+    signer.compareHash(activeSession0, activeSession1)
+
+    await collectionRef.write({
+      activeSession: 'no-session'
+    }, { merge: true })
+    await collectionRef.write({
+      userPrivateData: await signer.cipherUpdateKey(
+        eUserPrivateData,
+        activeSession0,
+        DBMANAGEDKEY
+      )
+    }, { merge: true })
+    await collectionRef.write({
+      email: await signer.cipherUpdateKey(
+        eEmail,
+        activeSession0,
+        DBMANAGEDKEY
+      )
+    }, { merge: true })
+
+    return h.response({ status: 'logged-out' })
+  } catch (e) {
+    return h.response(e.readError())
   }
-
-  const { UART } = req.payload
-  const jsonUART = await signer.applyUART(UART)
-  const hUsername = await signer.simpleHash(jsonUART.data.username)
-  const collectionRef = await fire('userdata', hUsername)
-  const activeSession0 = jsonUART.data.activeSession
-  const activeSession1 = await collectionRef.get('activeSession')
-  const eEmail = await collectionRef.get('email')
-  const eUserPrivateData = await collectionRef.get('userPrivateData')
-
-  if (!jsonUART.status) {
-    h.response({ status: 'invalid' })
-  }
-  if (await collectionRef.get('activeSession') === 'no-session') {
-    return h.response({ status: 'already-logged-out' })
-  }
-
-  if (!(await signer.compareHash(activeSession0, activeSession1))) {
-    return h.response({ status: 'session-mismatch' })
-  }
-
-  await collectionRef.write({
-    activeSession: 'no-session'
-  }, { merge: true })
-  await collectionRef.write({
-    userPrivateData: await signer.cipherUpdateKey(
-      eUserPrivateData,
-      activeSession0,
-      DBMANAGEDKEY
-    )
-  }, { merge: true })
-  await collectionRef.write({
-    email: await signer.cipherUpdateKey(
-      eEmail,
-      activeSession0,
-      DBMANAGEDKEY
-    )
-  }, { merge: true })
-
-  return h.response({ status: 'logged-out' })
 }
 
 /*
@@ -298,48 +308,42 @@ const __userLogout = async (req, h) => {
 */
 
 const __userUpdatePassword = async (req, h) => {
-  const { UART, oldPassword, newPassword } = req.payload
-  const jsonUART = await signer.applyUART(UART)
+  try {
+    const { UART, oldPassword, newPassword } = req.payload
+    const jsonUART = await signer.applyUART(UART)
 
-  if (!jsonUART.status) {
-    h.response({ status: 'invalid' })
-  }
+    const hUsername = signer.simpleHash(jsonUART.username)
+    const userDataRef = await fire('userdata', hUsername)
+    const hPassword = await userDataRef.get('pswd')
+    const hNewPassword = signer.simpleHash(newPassword, 'default', 512)
 
-  const hUsername = await signer.simpleHash(jsonUART.data.username)
-  const userDataRef = await fire('userdata', hUsername)
-  const hPassword = await userDataRef.get('pswd')
-  const isEqu = await signer.compareHash(oldPassword, hPassword, 512)
-  const hNewPassword = await signer.simpleHash(newPassword, 'default', 512)
+    signer.compareHash(oldPassword, hPassword, 512)
 
-  if (isEqu) {
     userDataRef.write({ pswd: hNewPassword }, { merge: true })
     return h.response({ status: 'password-updated' })
+  } catch (e) {
+    return h.response(e.readError())
   }
-  return h.response({ status: 'invalid' })
 }
 
 const __viewUserPrivateData = async (req, h) => {
-  const { UART } = req.payload
-  const jsonUART = await signer.apply(UART, DEFHMACKEY)
-  if (!jsonUART.status) {
-    return h.response({ status: jsonUART.status })
-  }
-  console.log(jsonUART)
-  const collectionRef = await fire('userdata', await signer.simpleHash(jsonUART.data.username))
-  if (
-    !await signer.compareHash(
-      jsonUART.data.activeSession,
-      await collectionRef.get('activeSession')
-    )
-  ) {
-    return h.response({ status: 'invalid' })
-  }
   try {
-    console.log('.', await signer.simpleDecrypt(await collectionRef.get('email'), jsonUART.data.activeSession))
+    const { UART } = req.payload
+    const jsonUART = signer.applyUART(UART)
+    console.log(jsonUART)
+    const collectionRef = await fire('userdata', signer.simpleHash(jsonUART.username))
+    if (
+      !await signer.compareHash(
+        jsonUART.activeSession,
+        await collectionRef.get('activeSession')
+      )
+    ) {
+      return h.response({ status: 'invalid' })
+    }
+    return h.response(await signer.simpleDecrypt(await collectionRef.get('userPrivateData'), jsonUART.activeSession))
   } catch (e) {
-    console.log(e)
+    return h.response(e.readError())
   }
-  return h.response(await signer.simpleDecrypt(await collectionRef.get('userPrivateData'), jsonUART.data.activeSession))
 }
 
 module.exports = {

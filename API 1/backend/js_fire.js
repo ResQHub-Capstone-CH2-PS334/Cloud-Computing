@@ -13,6 +13,13 @@ const fire = (col, doc = null) => {
       return await getFirestore().collection(col).doc(doc).get()
     }
     if (typeof (key) === 'object') {
+      if (Array.isArray(key)) {
+        const data = {}
+        for (const i in key) {
+          data[key[i]] = (await getFirestore().collection(col).doc(doc).get()).data()[key[i]]
+        }
+        return data
+      }
       const content = []
       const docId = []
 

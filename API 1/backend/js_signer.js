@@ -10,10 +10,15 @@ const __SUPERSECRET_KEYS = {
 }
 
 const TOKENCRYPT = 'kcTRA7prpdN_plYmoZHz1L7V6N1lP61t'
+const HMACSHAKEY = '381n248392rnd71usuida92_29jfi3nf'
+
 const STATUSLIB = {
   foreign: 'foreign token',
   expired: 'expired token',
-  invalid: 'invalid token'
+  invalid: 'invalid token',
+  mismatch: 'mismatch text and hashed text',
+  unknown: 'unidentified error',
+  illegal: 'illegal request'
 }
 
 class SignerError extends Error {
@@ -72,10 +77,8 @@ const apply = (__encryptedToken, __key) => {
 
     if (comparedSignature === decryptedToken[1]) {
       const jsonData = JSON.parse(atob(decryptedToken[0]))
-
       if (jsonData.eat < Math.round(new Date().getTime() / 1000) &&
       jsonData.eat !== null) throw new SignerError(func, 'expired')
-
       return jsonData
     } else throw new SignerError(func, 'invalid')
   } catch (e) {
@@ -84,12 +87,12 @@ const apply = (__encryptedToken, __key) => {
   }
 }
 
-const signUART = async (userPayload) => {
-  return await signThis(userPayload, __SUPERSECRET_KEYS.__HMACSHAKEY)
+const signUART = (userPayload) => {
+  return signThis(userPayload, HMACSHAKEY)
 }
 
-const applyUART = async (UART) => {
-  return apply(UART, __SUPERSECRET_KEYS.__HMACSHAKEY)
+const applyUART = (UART) => {
+  return apply(UART, HMACSHAKEY)
 }
 
 const simpleHash = (__txt, salting = 'nosalt', mode = 256) => {
@@ -124,29 +127,38 @@ const compareHash = (__txt, __hash, mode = 256) => {
   const hash = safeB64('dec', __hash)
   const salt = (hash.split('.').length === 2) ? hash.split('.')[0] : ''
   const vhash = safeB64('dec', simpleHash(__txt, salt, mode))
-  const catcher = new SignerError('compareHash')
+  const func = 'compareHash'
 
   try {
     if (vhash === hash) return true
-    catcher.writeError('mismatch', 'Inputted text does not equal the hashed')
-    throw catcher
+    throw new SignerError(func, 'mismatch')
   } catch (e) {
     if (e instanceof SignerError) throw e
-    else {
-      catcher.writeUnknown()
-      throw catcher
-    }
+    else throw new SignerError(func, 'unknown')
   }
 }
 
-const simpleEncrypt = async (__plain, __pwd) => {
-  return cjs.AES.encrypt(btoa(
-    (typeof __plain === 'object') ? JSON.stringify(__plain) : __plain
-  ), __pwd).toString()
+const simpleEncrypt = (__plain, __pwd) => {
+  const func = 'simpleEncrypt'
+  try {
+    const data = (typeof __plain === 'object') ? JSON.stringify(__plain) : __plain
+    const encrypted = cjs.AES.encrypt(btoa(data), __pwd).toString()
+    return encrypted
+  } catch (e) {
+    if (e instanceof SignerError) throw e
+    else throw new SignerError(func, 'unknown')
+  }
 }
 
-const simpleDecrypt = async (__cipher, __pwd) => {
-  return atob(cjs.AES.decrypt(__cipher, __pwd).toString(cjs.enc.Utf8))
+const simpleDecrypt = (__cipher, __pwd) => {
+  const func = 'simpleDecrypt'
+  try {
+    const decrypted = atob(cjs.AES.decrypt(__cipher, __pwd).toString(cjs.enc.Utf8))
+    return decrypted
+  } catch (e) {
+    if (e instanceof SignerError) throw e
+    else throw new SignerError(func, 'unknown')
+  }
 }
 
 const cipherUpdateKey = async (__cipher, __oldKey, __newKey) => {
@@ -154,7 +166,9 @@ const cipherUpdateKey = async (__cipher, __oldKey, __newKey) => {
   const encrypted = await cjs.AES.encrypt(decrypted, __newKey).toString()
   return encrypted
 }
+
 module.exports = {
+  SignerError,
   signThis,
   apply,
   signUART,
