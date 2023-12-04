@@ -1,7 +1,7 @@
 const fetch = require('node-fetch')
 
 const API_KEY = 'AIzaSyAnIKZjgZshlUmKuGsPdMh3cFjA9TeKeRI'
-const KEY = `key=${API_KEY}`
+// const KEY = `key=${API_KEY}`
 
 class MapsError extends Error {
   constructor (__funcitonName, __status) {
