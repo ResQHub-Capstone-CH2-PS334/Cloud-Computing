@@ -41,7 +41,7 @@ const __buildvkey = async (req, h) => {
   console.log(key)
   // __mail__(email, key)
   await collectionRef.write({
-    tokenKey: await signer.signThis({ user: email }, key.toString(), 15),
+    tokenKey: signer.signThis({ user: email }, key.toString(), 15),
     registered: false
   }, {})
   return h.response({
@@ -78,16 +78,12 @@ const __verifvkey = async (req, h) => {
     return h.response({ status: 'email-taken' })
   }
 
-  const apply = await signer.apply(await collectionRef.get('tokenKey'), vkey)
-  const ticket = await signer.signThis({ email }, TICKETKEY, 3600)
-
-  switch (apply.status) {
-    case 'expired':
-      return h.response({ status: 'expired' })
-    case 'authenticated':
-      return h.response({ status: 'verified', ticket })
-    default:
-      return h.response({ status: 'invalid' })
+  try {
+    signer.apply(await collectionRef.get('tokenKey'), vkey)
+    const ticket = await signer.signThis({ email }, TICKETKEY, 3600)
+    return h.response({ status: 'verified', ticket })
+  } catch (e) {
+    return h.response(e.readError())
   }
 }
 
@@ -125,7 +121,7 @@ const __signUser = async (req, h) => {
   const hEmail = await signer.simpleHash(payloads.email)
   const ticket = await signer.apply(payloads.ticket, TICKETKEY)
 
-  if (ticket.status !== 'authenticated' || payloads.email !== ticket.data.email) {
+  if (!ticket.status || payloads.email !== ticket.data.email) {
     return h.response({
       status: (ticket.status === 'expired') ? 'expired' : 'invalid'
     })
@@ -254,7 +250,7 @@ const __userLogout = async (req, h) => {
   const eEmail = await collectionRef.get('email')
   const eUserPrivateData = await collectionRef.get('userPrivateData')
 
-  if (jsonUART.status !== 'authenticated') {
+  if (!jsonUART.status) {
     h.response({ status: 'invalid' })
   }
   if (await collectionRef.get('activeSession') === 'no-session') {
@@ -286,11 +282,26 @@ const __userLogout = async (req, h) => {
   return h.response({ status: 'logged-out' })
 }
 
+/*
+  RELATED ENDPOINT  : /user-updatepassword
+  MAIN USAGE        : updating the user's password
+  PAYLOADS          : UART, oldPassword, newPassword
+  RETURNS
+    - {status: illegal}
+      accessing with the illegal request
+    - {status: invalid}
+      invalid UART
+    - {status: already-logged-out}
+      the requested username has logged out
+    - {status: logged-out}
+      successfully logged out
+*/
+
 const __userUpdatePassword = async (req, h) => {
   const { UART, oldPassword, newPassword } = req.payload
   const jsonUART = await signer.applyUART(UART)
 
-  if (jsonUART.status !== 'authenticated') {
+  if (!jsonUART.status) {
     h.response({ status: 'invalid' })
   }
 
@@ -310,7 +321,7 @@ const __userUpdatePassword = async (req, h) => {
 const __viewUserPrivateData = async (req, h) => {
   const { UART } = req.payload
   const jsonUART = await signer.apply(UART, DEFHMACKEY)
-  if (jsonUART.status !== 'authenticated') {
+  if (!jsonUART.status) {
     return h.response({ status: jsonUART.status })
   }
   console.log(jsonUART)

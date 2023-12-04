@@ -9,6 +9,29 @@ const __SUPERSECRET_KEYS = {
   __USERDBIDLE: 'poru489r2--23?jdf893298c2898r2i3'
 }
 
+const TOKENCRYPT = 'kcTRA7prpdN_plYmoZHz1L7V6N1lP61t'
+const STATUSLIB = {
+  foreign: 'foreign token',
+  expired: 'expired token',
+  invalid: 'invalid token'
+}
+
+class SignerError extends Error {
+  constructor (__funcitonName, __status) {
+    super()
+    this.funcitonName = __funcitonName
+    this.status = __status
+    this.description = STATUSLIB[__status]
+  }
+
+  readError () {
+    return {
+      status: this.status,
+      description: 'at ' + this.funcitonName + '(): ' + this.description
+    }
+  }
+}
+
 const safeB64 = (__mode, __input) => {
   if (__mode === 'enc') {
     return btoa(__input).replace('/', '_').replace('+', '-')
@@ -18,7 +41,7 @@ const safeB64 = (__mode, __input) => {
   }
 }
 
-const signThis = async (__jsonData, __key, __duration = null) => {
+const signThis = (__jsonData, __key, __duration = null) => {
   const nowUnix = Math.round(new Date().getTime() / 1000)
   const jsonData = {
     ...__jsonData,
@@ -33,27 +56,32 @@ const signThis = async (__jsonData, __key, __duration = null) => {
     __SUPERSECRET_KEYS.__TOKENCRYPT).toString()
 }
 
-const apply = async (__encryptedToken, __key) => {
-  if (__encryptedToken.slice(0, 7) !== 'resqhub') {
-    return { status: 'not-a-resqhub-token', data: {} }
+const apply = (__encryptedToken, __key) => {
+  const initiator = __encryptedToken.slice(0, 7)
+  const token = __encryptedToken.slice(7)
+  const func = 'apply'
+
+  if (initiator !== 'resqhub') {
+    throw new SignerError(func, 'foreign')
   }
-  let decryptedToken = 0
+
   try {
-    decryptedToken = cjs.AES.decrypt(__encryptedToken.slice(7),
-      __SUPERSECRET_KEYS.__TOKENCRYPT).toString(cjs.enc.Utf8).split(':')
-  } catch (err) {
-    if (err.message === 'Malformed UTF-8 data') return { status: 'malformed', data: {} }
+    const decryptedToken = cjs.AES.decrypt(token, TOKENCRYPT).toString(cjs.enc.Utf8).split(':')
+    const salt = decryptedToken[2]
+    const comparedSignature = cjs.HmacSHA256(decryptedToken[0], __key + salt).toString()
+
+    if (comparedSignature === decryptedToken[1]) {
+      const jsonData = JSON.parse(atob(decryptedToken[0]))
+
+      if (jsonData.eat < Math.round(new Date().getTime() / 1000) &&
+      jsonData.eat !== null) throw new SignerError(func, 'expired')
+
+      return jsonData
+    } else throw new SignerError(func, 'invalid')
+  } catch (e) {
+    if (e instanceof SignerError) throw e
+    else throw new SignerError(func, 'invalid')
   }
-  const salt = decryptedToken[2]
-  const comparedSignature = cjs.HmacSHA256(decryptedToken[0], __key + salt).toString()
-  if (comparedSignature === decryptedToken[1]) {
-    const jsonData = JSON.parse(atob(decryptedToken[0]))
-    if (jsonData.eat < Math.round(new Date().getTime() / 1000) && jsonData.eat !== null) {
-      return { status: 'expired', data: jsonData }
-    }
-    return { status: 'authenticated', data: jsonData }
-  }
-  return { status: 'unauthenticated', data: {} }
 }
 
 const signUART = async (userPayload) => {
@@ -61,10 +89,10 @@ const signUART = async (userPayload) => {
 }
 
 const applyUART = async (UART) => {
-  return await apply(UART, __SUPERSECRET_KEYS.__HMACSHAKEY)
+  return apply(UART, __SUPERSECRET_KEYS.__HMACSHAKEY)
 }
 
-const simpleHash = async (__txt, salting = 'nosalt', mode = 256) => {
+const simpleHash = (__txt, salting = 'nosalt', mode = 256) => {
   const salt =
   (salting === 'default')
     ? nanoid(8)
@@ -92,12 +120,23 @@ const simpleHash = async (__txt, salting = 'nosalt', mode = 256) => {
   }
 }
 
-const compareHash = async (__txt, __hash, mode = 256) => {
+const compareHash = (__txt, __hash, mode = 256) => {
   const hash = safeB64('dec', __hash)
   const salt = (hash.split('.').length === 2) ? hash.split('.')[0] : ''
-  const vhash = safeB64('dec', await simpleHash(__txt, salt, mode))
-  if (vhash === hash) return true
-  return false
+  const vhash = safeB64('dec', simpleHash(__txt, salt, mode))
+  const catcher = new SignerError('compareHash')
+
+  try {
+    if (vhash === hash) return true
+    catcher.writeError('mismatch', 'Inputted text does not equal the hashed')
+    throw catcher
+  } catch (e) {
+    if (e instanceof SignerError) throw e
+    else {
+      catcher.writeUnknown()
+      throw catcher
+    }
+  }
 }
 
 const simpleEncrypt = async (__plain, __pwd) => {
