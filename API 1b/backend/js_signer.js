@@ -1,6 +1,6 @@
 const cjs = require('crypto-js')
+const { SignerError } = require('./js_errorHandler')
 const { nanoid } = require('nanoid')
-
 const __SUPERSECRET_KEYS = {
   __TOKENCRYPT: 'kcTRA7prpdN_plYmoZHz1L7V6N1lP61t',
   __APPDEFAULT: '82jf72oen3_283yy716jchZ7238h1946',
@@ -11,30 +11,6 @@ const __SUPERSECRET_KEYS = {
 
 const TOKENCRYPT = 'kcTRA7prpdN_plYmoZHz1L7V6N1lP61t'
 const HMACSHAKEY = '381n248392rnd71usuida92_29jfi3nf'
-
-class SignerError extends Error {
-  constructor (__funcitonName, __status) {
-    super()
-    this.STATUSLIB = {
-      foreign: 'foreign token',
-      expired: 'expired token',
-      invalid: 'invalid token',
-      mismatch: 'mismatch text and hashed text',
-      unknown: 'unidentified error',
-      illegal: 'illegal request'
-    }
-    this.funcitonName = __funcitonName
-    this.status = __status
-    this.description = this.STATUSLIB[__status]
-  }
-
-  readError () {
-    return {
-      status: this.status,
-      description: 'at ' + this.funcitonName + '(): ' + this.description
-    }
-  }
-}
 
 const safeB64 = (__mode, __input) => {
   if (__mode === 'enc') {
