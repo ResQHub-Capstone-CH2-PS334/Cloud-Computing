@@ -2,12 +2,12 @@ const signer = require('./js_signer')
 const APPKEY = signer.__SUPERSECRET_KEYS.__APPDEFAULT
 const TICKETKEY = signer.__SUPERSECRET_KEYS.__TICKETREGS
 const DBMANAGEDKEY = signer.__SUPERSECRET_KEYS.__USERDBIDLE
-const DEFHMACKEY = signer.__SUPERSECRET_KEYS.__HMACSHAKEY
+// const DEFHMACKEY = signer.__SUPERSECRET_KEYS.__HMACSHAKEY
 const { nanoid } = require('nanoid')
 const fire = require('./js_fire')
-const { MethodsError, SignerError } = require('./js_errorHandler')
+const { MethodsError, SignerError, FireError } = require('./js_errorHandler')
 
-const __generateKey__ = async (size) => {
+const __generateKey__ = (size) => {
   let k = ''
   for (let i = 0; i < size; i++) {
     k += Math.floor(Math.random() * 10)
@@ -20,6 +20,12 @@ const isLegal = (req) => {
   return true
 }
 
+const isLegalAccess = (req) => {
+  if (req.headers.appkeyBridge !== 'bridge' + APPKEY) {
+    throw new MethodsError('isLegal', 'not illegal, but give access to')
+  }
+}
+
 const __default = async (req, h) => {
   return 1
 }
@@ -29,37 +35,34 @@ const __default = async (req, h) => {
   MAIN USAGE        : creating a verification key / token, sent to user's email address,
                       stored in Firestore
   PAYLOADS          : email (the user's email)
-  RETURNS
-    - {status: already-registered}
-      the user is registered
-    - {status: succes}
-      the verification key is sent to the user's email
 */
 
 const __buildvkey = async (req, h) => {
-  const func = '__buildvkey'
-
+  const func = __buildvkey
   try {
     isLegal(req)
     const { email } = req.payload
-    const key = await __generateKey__(7)
-    const collectionRef = await fire('verifdata', signer.simpleHash(email))
-    if ((await collectionRef.get()).exists && await collectionRef.get('registeredEmail')) {
-      throw new MethodsError(func, 'registered')
+    const key = __generateKey__(7)
+    const collectionRef = fire('verifdata', signer.simpleHash(email))
+
+    try {
+      await collectionRef.get('registeredEmail')
+      throw new MethodsError(func, 'registeredEmail')
+    } catch (e) {
+      console.log(key)
+      // __mail__(email, key)
+      await collectionRef.write({
+        tokenKey: signer.signThis({ user: email }, key.toString(), 30),
+        registered: false
+      }, {})
+      return h.response({
+        status: 'success'
+      })
     }
-    console.log(key)
-    // __mail__(email, key)
-    await collectionRef.write({
-      tokenKey: signer.signThis({ user: email }, key.toString(), 30),
-      registered: false
-    }, {})
-    return h.response({
-      status: 'success'
-    })
   } catch (e) {
-    if (e instanceof MethodsError || e instanceof SignerError) {
+    if (e instanceof MethodsError || e instanceof SignerError || e instanceof FireError) {
       return h.response(e.readError()).code(502)
-    } else return h.response({ status: 'unknown?' })
+    } else return h.response({ status: 'unknown?', message: e })
   }
 }
 
@@ -68,17 +71,6 @@ const __buildvkey = async (req, h) => {
   MAIN USAGE        : validating the user's input of the verification key with the
                       previously generated verification key (stored in Firestore)
   PAYLOADS          : email, vkey (the verification key)
-  RETURNS
-    - {status: not-exist}
-      no token is avaiable pertaining to the email
-    - {status: already-registered}
-      the email has been taken for a registration
-    - {status: expired}
-      the verification code has expired
-    - {status: verified}
-      the verification code inputted is validated, giving user a registration ticket
-    - {status: invalid}
-      the verification code is invalid
 */
 
 const __verifvkey = async (req, h) => {
@@ -86,10 +78,7 @@ const __verifvkey = async (req, h) => {
   try {
     const { email, vkey } = req.payload
     const hashedEmail = signer.simpleHash(email)
-    const collectionRef = await fire('verifdata', hashedEmail)
-    const isAvaibable = (await collectionRef.get()).exists
-
-    if (!isAvaibable) throw new MethodsError(func, 'corruptedEmail')
+    const collectionRef = fire('verifdata', hashedEmail)
 
     const collectionRefData = await collectionRef.get(['registered', 'tokenKey'])
     const isRegistered = collectionRefData.registered
@@ -117,17 +106,6 @@ const __verifvkey = async (req, h) => {
     - id (the user's national ID number)
     - birth (the user's birth date)
     - ticket (the user's registration ticket)
-  RETURNS
-    - {status: illegal}
-      accessing with the illegal request
-    - {status: signed}
-      the user has been signed up
-    - {status: expired}
-      the ticket has expired
-    - {status: used-email}
-      using the already registered email
-    - {status: used-username}
-      using the already registered username
 */
 
 const __signUser = async (req, h) => {
@@ -188,15 +166,6 @@ const __signUser = async (req, h) => {
   RELATED ENDPOINT  : /user-login
   MAIN USAGE        : logging in a user
   PAYLOADS          : username, password
-  RETURNS
-    - {status: illegal}
-      accessing with the illegal request
-    - {status: invalid}
-      invalid username/password
-    - {status: already-logged-in}
-      the requested username has logged in
-    - {status: logged-in}
-      successfull logged in
 */
 
 const __userLogin = async (req, h) => {
@@ -219,7 +188,7 @@ const __userLogin = async (req, h) => {
     const isPswdMatch = signer.compareHash(password, await user.get('pswd'), 512)
     if (isPswdMatch) {
       const activeSession = nanoid(32)
-      const hActiveSession = await signer.simpleHash(activeSession, 'default', 256)
+      const hActiveSession = await signer.simpleHash(activeSession, 'default')
       const updatedUserPrivateData = await signer.cipherUpdateKey(
         await user.get('userPrivateData'),
         DBMANAGEDKEY,
@@ -251,15 +220,6 @@ const __userLogin = async (req, h) => {
   RELATED ENDPOINT  : /user-logout
   MAIN USAGE        : logging out a user
   PAYLOADS          : UART
-  RETURNS
-    - {status: illegal}
-      accessing with the illegal request
-    - {status: invalid/session-mismatch}
-      corrupted UART
-    - {status: already-logged-out}
-      the requested username has logged out
-    - {status: logged-out}
-      successfully logged out
 */
 
 const __userLogout = async (req, h) => {
@@ -317,19 +277,10 @@ const __userLogout = async (req, h) => {
   RELATED ENDPOINT  : /user-updatepassword
   MAIN USAGE        : updating the user's password
   PAYLOADS          : UART, oldPassword, newPassword
-  RETURNS
-    - {status: illegal}
-      accessing with the illegal request
-    - {status: invalid}
-      invalid UART
-    - {status: already-logged-out}
-      the requested username has logged out
-    - {status: logged-out}
-      successfully logged out
 */
 
 const __userUpdatePassword = async (req, h) => {
-  const func = '__userUpdatePassword'
+  // const func = '__userUpdatePassword'
   try {
     isLegal(req)
     const { UART, oldPassword, newPassword } = req.payload

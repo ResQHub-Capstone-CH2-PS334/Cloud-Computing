@@ -1,5 +1,6 @@
 const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 const { initializeApp, cert } = require('firebase-admin/app')
+const { FireError } = require('./js_errorHandler')
 const __serviceAccount = require('./keys/key-firestore.json')
 
 initializeApp({
@@ -7,10 +8,15 @@ initializeApp({
 })
 
 const fire = (col, doc = null) => {
+  const headFunc = 'fire'
   const __get = async (key = null) => {
+    const func = headFunc + '.__get'
     if (key === null) {
       // returns a document metadata
       return await getFirestore().collection(col).doc(doc).get()
+    }
+    if (!(await getFirestore().collection(col).doc(doc).get()).exists) {
+      throw new FireError(func, 'documentMissing')
     }
     if (typeof (key) === 'object') {
       if (Array.isArray(key)) {

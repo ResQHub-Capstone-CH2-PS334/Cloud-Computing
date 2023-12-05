@@ -15,20 +15,23 @@ const __ERRLIB = {
     alreadyIn: 'already logged in',
     alreadyOut: 'already logged out',
     illegal: 'illegal request'
+  },
+  FireError: {
+    documentMissing: 'no document found'
   }
 }
 
 class DefaultError extends Error {
   constructor (__funcName, __status) {
     super()
-    this.funcitonName = __funcName
+    this.functionName = __funcName
     this.status = __status
   }
 
   readError () {
     return {
       status: this.status,
-      description: 'at ' + this.funcitonName + '(): ' + this.description
+      description: 'at ' + this.functionName + '(): ' + this.description
     }
   }
 }
@@ -53,8 +56,16 @@ class SessionError extends DefaultError {
     this.description = __ERRLIB.SessionError[__status]
   }
 }
+
+class FireError extends DefaultError {
+  constructor (__funcName, __status) {
+    super(__funcName, __status)
+    this.description = __ERRLIB.FireError[__status]
+  }
+}
 module.exports = {
   MethodsError,
   SignerError,
-  SessionError
+  SessionError,
+  FireError
 }
