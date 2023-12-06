@@ -1,23 +1,29 @@
+const ERRS = [' (SignerError)', ' (MethodsError)', '(FireError)', ' (SessionError)']
 const __ERRLIB = {
   SignerError: {
-    foreign: 'foreign token',
-    expired: 'expired token',
-    invalid: 'invalid token',
-    mismatch: 'mismatch text and hashed text',
-    unknown: 'unidentified error',
-    illegal: 'illegal request'
+    foreign: 'foreign token' + ERRS[0],
+    expired: 'expired token' + ERRS[0],
+    invalid: 'invalid token' + ERRS[0],
+    mismatch: 'mismatch text and hashed text' + ERRS[0],
+    unknown: 'unidentified error' + ERRS[0],
+    illegal: 'illegal request' + ERRS[0]
   },
   MethodsError: {
-    registeredEmail: 'email already registered',
-    corruptedEmail: 'invalid email for request',
-    registeredUsername: 'username already registered',
-    unrecognized: 'invalid username',
-    alreadyIn: 'already logged in',
-    alreadyOut: 'already logged out',
-    illegal: 'illegal request'
+    registeredEmail: 'email already registered' + ERRS[1],
+    corruptedEmail: 'invalid email for request' + ERRS[1],
+    registeredUsername: 'username already registered' + ERRS[1],
+    unrecognized: 'invalid username' + ERRS[1],
+    alreadyIn: 'already logged in' + ERRS[1],
+    alreadyOut: 'already logged out' + ERRS[1],
+    illegal: 'illegal request' + ERRS[1]
   },
   FireError: {
-    documentMissing: 'no document found'
+    documentMissing: 'no document found' + ERRS[2]
+  },
+  SessionError: {
+    activeSessionMismatch: 'active session does not match' + ERRS[3],
+    unknown: 'unidentified error' + ERRS[3],
+    wrongType: 'Expected either RT/AT, providing wrong type' + ERRS[3]
   }
 }
 
@@ -63,6 +69,7 @@ class FireError extends DefaultError {
     this.description = __ERRLIB.FireError[__status]
   }
 }
+
 module.exports = {
   MethodsError,
   SignerError,

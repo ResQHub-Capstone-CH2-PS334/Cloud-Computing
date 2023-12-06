@@ -1,12 +1,25 @@
-const signer = require('./js_signer')
-const APPKEY = signer.__SUPERSECRET_KEYS.__APPDEFAULT
+const signer = require('../security_modules/js_signer')
+const fire = require('../security_modules/js_fire')
+const sessionHandler = require('../security_modules/js_sessionHandler')
+const {
+  MethodsError,
+  SignerError,
+  FireError,
+  SessionError
+} = require('../security_modules/js_errorHandler')
+const { nanoid } = require('nanoid')
+// const mail = require('./js_mail')
+
+const APPKEY = 'default-appkey'
 const TICKETKEY = signer.__SUPERSECRET_KEYS.__TICKETREGS
 const DBMANAGEDKEY = signer.__SUPERSECRET_KEYS.__USERDBIDLE
-// const DEFHMACKEY = signer.__SUPERSECRET_KEYS.__HMACSHAKEY
-const { nanoid } = require('nanoid')
-const fire = require('./js_fire')
-const { MethodsError, SignerError, FireError } = require('./js_errorHandler')
 
+const isInstancesOf = (e) => {
+  return (e instanceof MethodsError ||
+     e instanceof SignerError ||
+     e instanceof FireError ||
+     e instanceof SessionError)
+}
 const __generateKey__ = (size) => {
   let k = ''
   for (let i = 0; i < size; i++) {
@@ -15,15 +28,15 @@ const __generateKey__ = (size) => {
   return k
 }
 
-const isLegal = (req) => {
-  if (req.headers.appkey !== APPKEY) throw new MethodsError('isLegal', 'illegal')
-  return true
-}
-
-const isLegalAccess = (req) => {
-  if (req.headers.appkeyBridge !== 'bridge' + APPKEY) {
-    throw new MethodsError('isLegal', 'not illegal, but give access to')
+const isLegal = (__req, __tokenRequired = false) => {
+  if ((__req.headers.appkey !== APPKEY)) throw new MethodsError('isLegal', 'illegal')
+  if (__tokenRequired === 'rt' && __req.headers.rt === undefined) {
+    throw new MethodsError('isLegal', 'illegal')
   }
+  if (__tokenRequired === 'at' && __req.headers.at === undefined) {
+    throw new MethodsError('isLegal', 'illegal')
+  }
+  return true
 }
 
 const __default = async (req, h) => {
@@ -31,43 +44,43 @@ const __default = async (req, h) => {
 }
 
 /*
-  RELATED ENDPOINT  : /build-vkey
+  RELATED ENDPOINT  : /build-vkey (POST)
   MAIN USAGE        : creating a verification key / token, sent to user's email address,
                       stored in Firestore
   PAYLOADS          : email (the user's email)
 */
 
 const __buildvkey = async (req, h) => {
-  const func = __buildvkey
+  const func = '__buildvkey'
   try {
     isLegal(req)
     const { email } = req.payload
     const key = __generateKey__(7)
     const collectionRef = fire('verifdata', signer.simpleHash(email))
-
+    //
     try {
-      await collectionRef.get('registeredEmail')
-      throw new MethodsError(func, 'registeredEmail')
+      await collectionRef.get('registered')
     } catch (e) {
       console.log(key)
-      // __mail__(email, key)
+      // mail.mailVerificaionKey(email, key)
       await collectionRef.write({
-        tokenKey: signer.signThis({ user: email }, key.toString(), 30),
+        tokenKey: signer.signThis({ user: email }, key.toString(), 300),
         registered: false
       }, {})
       return h.response({
         status: 'success'
       })
     }
+    throw new MethodsError(func, 'registeredEmail')
   } catch (e) {
-    if (e instanceof MethodsError || e instanceof SignerError || e instanceof FireError) {
+    if (isInstancesOf(e)) {
       return h.response(e.readError()).code(502)
-    } else return h.response({ status: 'unknown?', message: e })
+    } else return h.response({ status: 'unknown?', description: `At ${func}()` })
   }
 }
 
 /*
-  RELATED ENDPOINT  : /verify-vkey
+  RELATED ENDPOINT  : /verify-vkey (POST)
   MAIN USAGE        : validating the user's input of the verification key with the
                       previously generated verification key (stored in Firestore)
   PAYLOADS          : email, vkey (the verification key)
@@ -79,25 +92,25 @@ const __verifvkey = async (req, h) => {
     const { email, vkey } = req.payload
     const hashedEmail = signer.simpleHash(email)
     const collectionRef = fire('verifdata', hashedEmail)
-
     const collectionRefData = await collectionRef.get(['registered', 'tokenKey'])
     const isRegistered = collectionRefData.registered
-
+    //
     if (isRegistered) throw new MethodsError(func, 'registeredEmail')
+    //
     signer.apply(collectionRefData.tokenKey, vkey)
     const ticket = signer.signThis({ email }, TICKETKEY, 3600)
-
+    //
     return h.response({ status: 'verified', ticket })
   } catch (e) {
-    if (e instanceof MethodsError || e instanceof SignerError) {
+    if (isInstancesOf(e)) {
       return h.response(e.readError()).code(502)
-    } else return h.response({ status: 'unknown?' })
+    } else return h.response({ status: 'unknown?', description: `At ${func}()` })
   }
 }
 
 /*
-  RELATED ENDPOINT  : /sign-user
-  MAIN USAGE        : creating a User Authenticated Recognition Token (UART)
+  RELATED ENDPOINT  : /sign-user (POST)
+  MAIN USAGE        : creating a User Authenticated Recognition Token (RT)
   PAYLOADS          :
     - email (the user's email)
     - username (the user's preferred username)
@@ -113,16 +126,16 @@ const __signUser = async (req, h) => {
   const payloads = req.payload
   const hUsername = signer.simpleHash(payloads.username)
   const hEmail = signer.simpleHash(payloads.email)
-
+  //
   try {
     isLegal(req)
     signer.apply(payloads.ticket, TICKETKEY)
-
+    //
     const pswd = signer.simpleHash(payloads.password, 'default', 512)
-    const userDataRef = await fire('userdata', hUsername)
-    const verifDataRef = await fire('verifdata', hEmail) // registered
+    const userDataRef = fire('userdata', hUsername)
+    const verifDataRef = fire('verifdata', hEmail)
     const isExistEmail = (await verifDataRef.get()).exists
-
+    //
     if (!isExistEmail) {
       throw new MethodsError(func, 'corruptedEmail')
     } else if (await verifDataRef.get('registered')) {
@@ -130,7 +143,7 @@ const __signUser = async (req, h) => {
     } else if ((await userDataRef.get()).exists) {
       throw new MethodsError(func, 'registeredUsername')
     }
-
+    //
     const activeSession = nanoid(32)
     const encryptedEmail = signer.simpleEncrypt(payloads.email, activeSession)
     const userPrivateData = signer.simpleEncrypt({
@@ -138,9 +151,10 @@ const __signUser = async (req, h) => {
       id: payloads.id,
       brth: payloads.birth
     }, activeSession)
-    const UART = signer.signUART({
+    const RT = sessionHandler.signToken({
       username: payloads.username,
-      activeSession
+      activeSession,
+      type: 'rt'
     })
     const write = {
       userPrivateData,
@@ -148,17 +162,17 @@ const __signUser = async (req, h) => {
       activeSession: signer.simpleHash(activeSession, 'default'),
       email: encryptedEmail
     }
-
+    //
     await userDataRef.write(write, { merge: true })
-    await verifDataRef.write({ registered: true })
+    await verifDataRef.write({ registered: true }, { merge: true })
     await verifDataRef.delete('tokenKey')
     console.log(activeSession)
-
-    return h.response({ status: 'signed', UART })
+    //
+    return h.response({ status: 'signed', RT })
   } catch (e) {
-    if (e instanceof MethodsError || e instanceof SignerError) {
+    if (isInstancesOf(e)) {
       return h.response(e.readError()).code(502)
-    } else return h.response({ status: 'unknown?' })
+    } else return h.response({ status: 'unknown?', description: `At ${func}()` })
   }
 }
 
@@ -170,155 +184,156 @@ const __signUser = async (req, h) => {
 
 const __userLogin = async (req, h) => {
   const func = '__userLogin'
-
+  //
   try {
     isLegal(req)
     const { username, password } = req.payload
-
+    //
     const hUsrn = signer.simpleHash(username)
-    const user = await fire('userdata', hUsrn)
-
-    if (!(await user.get()).exists) {
-      throw new MethodsError(func, 'unrecognized')
-    }
+    const user = fire('userdata', hUsrn)
+    //
     if (await user.get('activeSession') !== 'no-session') {
       throw new MethodsError(func, 'alreadyIn')
     }
-
-    const isPswdMatch = signer.compareHash(password, await user.get('pswd'), 512)
-    if (isPswdMatch) {
-      const activeSession = nanoid(32)
-      const hActiveSession = await signer.simpleHash(activeSession, 'default')
-      const updatedUserPrivateData = await signer.cipherUpdateKey(
-        await user.get('userPrivateData'),
-        DBMANAGEDKEY,
-        activeSession
-      )
-
-      const updatedEmail = await signer.cipherUpdateKey(
-        await user.get('email'),
-        DBMANAGEDKEY,
-        activeSession
-      )
-
-      user.write({ userPrivateData: updatedUserPrivateData }, { merge: true })
-      user.write({ activeSession: hActiveSession }, { merge: true })
-      user.write({ email: updatedEmail }, { merge: true })
-
-      console.log(activeSession)
-      const UART = await signer.signUART({ username, activeSession })
-      return h.response({ status: 'logged in', UART })
-    }
+    //
+    signer.compareHash(password, await user.get('pswd'), 512)
+    //
+    const activeSession = nanoid(32)
+    const hActiveSession = await signer.simpleHash(activeSession, 'default')
+    const updatedUserPrivateData = await signer.cipherUpdateKey(
+      await user.get('userPrivateData'),
+      DBMANAGEDKEY,
+      activeSession
+    )
+    const updatedEmail = await signer.cipherUpdateKey(
+      await user.get('email'),
+      DBMANAGEDKEY,
+      activeSession
+    )
+    //
+    user.write({
+      userPrivateData: updatedUserPrivateData,
+      activeSession: hActiveSession,
+      email: updatedEmail
+    }, { merge: true })
+    //
+    console.log(activeSession)
+    const RT = sessionHandler.signToken({ username, activeSession, type: 'rt' })
+    return h.response({ status: 'logged in', RT })
   } catch (e) {
-    if (e instanceof MethodsError || e instanceof SignerError) {
+    if (isInstancesOf(e)) {
       return h.response(e.readError()).code(502)
-    } else return h.response({ status: 'unknown?' })
+    } else return h.response({ status: 'unknown?', description: `At ${func}()` })
   }
 }
 
 /*
-  RELATED ENDPOINT  : /user-logout
+  RELATED ENDPOINT  : /user-logout (GET)
   MAIN USAGE        : logging out a user
-  PAYLOADS          : UART
+  PAYLOADS          : RT
 */
 
 const __userLogout = async (req, h) => {
   const func = '__userLogout'
+  //
   try {
-    isLegal(req)
-    const { UART } = req.payload
-    const jsonUART = signer.applyUART(UART)
-    const hUsername = signer.simpleHash(jsonUART.username)
-    const collectionRef = await fire('userdata', hUsername)
-
-    if (!(await collectionRef.get()).exists) {
-      throw new MethodsError(func, 'unrecognized')
-    }
-
+    const AT = req.headers.at
+    isLegal(req, 'at')
+    await sessionHandler.validateRequest(AT)
+    const jsonAT = sessionHandler.applyToken(AT)
+    const hUsername = signer.simpleHash(jsonAT.username)
+    const collectionRef = fire('userdata', hUsername)
     const collectionRefData = await collectionRef.get(['activeSession', 'email', 'userPrivateData'])
-    const activeSession0 = jsonUART.activeSession
-    const activeSession1 = collectionRefData.activeSession
+    const activeSession0 = jsonAT.activeSession
     const eEmail = collectionRefData.email
     const eUserPrivateData = collectionRefData.userPrivateData
-
-    if (await collectionRef.get('activeSession') === 'no-session') {
-      throw new MethodsError(func, 'alreadyOut')
-    }
-
-    signer.compareHash(activeSession0, activeSession1)
-
+    //
     await collectionRef.write({
-      activeSession: 'no-session'
-    }, { merge: true })
-    await collectionRef.write({
-      userPrivateData: await signer.cipherUpdateKey(
+      userPrivateData: signer.cipherUpdateKey(
         eUserPrivateData,
         activeSession0,
         DBMANAGEDKEY
-      )
-    }, { merge: true })
-    await collectionRef.write({
-      email: await signer.cipherUpdateKey(
+      ),
+      email: signer.cipherUpdateKey(
         eEmail,
         activeSession0,
         DBMANAGEDKEY
-      )
+      ),
+      activeSession: 'no-session'
     }, { merge: true })
 
     return h.response({ status: 'logged-out' })
   } catch (e) {
-    if (e instanceof MethodsError || e instanceof SignerError) {
+    if (isInstancesOf(e)) {
       return h.response(e.readError()).code(502)
-    } else return h.response({ status: 'unknown?' })
+    } else return h.response({ status: 'unknown?', description: `At ${func}()` })
   }
 }
 
 /*
-  RELATED ENDPOINT  : /user-updatepassword
+  RELATED ENDPOINT  : /user-updatepassword (POST)
   MAIN USAGE        : updating the user's password
-  PAYLOADS          : UART, oldPassword, newPassword
+  PAYLOADS          : oldPassword, newPassword
 */
 
 const __userUpdatePassword = async (req, h) => {
-  // const func = '__userUpdatePassword'
+  const func = '__userUpdatePassword'
   try {
-    isLegal(req)
-    const { UART, oldPassword, newPassword } = req.payload
-    const jsonUART = signer.applyUART(UART)
-
-    const hUsername = signer.simpleHash(jsonUART.username)
+    const AT = req.headers.at
+    isLegal(req, 'at')
+    const jsonAT = await sessionHandler.validateRequest(AT)
+    const { oldPassword, newPassword } = req.payload
+    const hUsername = signer.simpleHash(jsonAT.username)
     const userDataRef = await fire('userdata', hUsername)
     const hPassword = await userDataRef.get('pswd')
     const hNewPassword = signer.simpleHash(newPassword, 'default', 512)
-
+    //
     signer.compareHash(oldPassword, hPassword, 512)
-
+    //
     userDataRef.write({ pswd: hNewPassword }, { merge: true })
     return h.response({ status: 'password-updated' })
   } catch (e) {
-    if (e instanceof MethodsError || e instanceof SignerError) {
+    if (isInstancesOf(e)) {
       return h.response(e.readError()).code(502)
-    } else return h.response({ status: 'unknown?' })
+    } else return h.response({ status: 'unknown?', description: `At ${func}()` })
   }
 }
 
 const __viewUserPrivateData = async (req, h) => {
+  const func = '__viewUserPrivateData'
   try {
-    const { UART } = req.payload
-    const jsonUART = signer.applyUART(UART)
-    console.log(jsonUART)
-    const collectionRef = await fire('userdata', signer.simpleHash(jsonUART.username))
-    if (
-      !await signer.compareHash(
-        jsonUART.activeSession,
-        await collectionRef.get('activeSession')
-      )
-    ) {
-      return h.response({ status: 'invalid' })
-    }
-    return h.response(await signer.simpleDecrypt(await collectionRef.get('userPrivateData'), jsonUART.activeSession))
+    const AT = req.headers.at
+    //
+    isLegal(req, 'at')
+    //
+    const jsonAT = await sessionHandler.validateRequest(AT)
+    const hUsername = signer.simpleHash(jsonAT.username)
+    const userPrivateData = await fire('userdata', hUsername).get('userPrivateData')
+    const decryptedUserData = signer.simpleDecrypt(userPrivateData, jsonAT.activeSession)
+    //
+    return h.response({ status: 'success', data: decryptedUserData })
   } catch (e) {
-    return h.response(e.readError())
+    if (isInstancesOf(e)) {
+      return h.response(e.readError()).code(502)
+    } else return h.response({ status: 'unknown?', description: `At ${func}()` })
+  }
+}
+
+/*
+  RELATED ENDPOINT  : /request-at (GET)
+  MAIN USAGE        : getting Access Token (AT)
+  PAYLOADS          : -
+*/
+
+const __requestAT = async (req, h) => {
+  const RT = req.headers.rt
+  try {
+    isLegal(req, 'rt')
+    return h.response({ AT: await sessionHandler.requestAT(RT) })
+  } catch (e) {
+    if (e instanceof MethodsError || e instanceof SignerError || e instanceof SessionError) {
+      return h.response(e.readError()).code(502)
+    } else return h.response({ status: 'unknown?' })
   }
 }
 
@@ -330,5 +345,6 @@ module.exports = {
   userLogin: __userLogin,
   userLogout: __userLogout,
   viewUserPrivateData: __viewUserPrivateData,
-  userUpdatePassword: __userUpdatePassword
+  userUpdatePassword: __userUpdatePassword,
+  requestAT: __requestAT
 }

@@ -1,5 +1,5 @@
 const Hapi = require('@hapi/hapi')
-const routers = require('./js_routers')
+const routers = require('./surface_modules/js_routers')
 
 async function start () {
   const server = Hapi.server({

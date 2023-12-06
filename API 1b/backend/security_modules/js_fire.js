@@ -1,7 +1,7 @@
 const { getFirestore, FieldValue } = require('firebase-admin/firestore')
 const { initializeApp, cert } = require('firebase-admin/app')
 const { FireError } = require('./js_errorHandler')
-const __serviceAccount = require('./keys/key-firestore.json')
+const __serviceAccount = require('../keys/key-firestore.json')
 
 initializeApp({
   credential: cert(__serviceAccount)
@@ -21,7 +21,7 @@ const fire = (col, doc = null) => {
     if (typeof (key) === 'object') {
       if (Array.isArray(key)) {
         const data = {}
-        for (const i in key) {
+        for (let i = 0; i < key.length; i++) {
           data[key[i]] = (await getFirestore().collection(col).doc(doc).get()).data()[key[i]]
         }
         return data

@@ -10,7 +10,6 @@ const __SUPERSECRET_KEYS = {
 }
 
 const TOKENCRYPT = 'kcTRA7prpdN_plYmoZHz1L7V6N1lP61t'
-const HMACSHAKEY = '381n248392rnd71usuida92_29jfi3nf'
 
 const safeB64 = (__mode, __input) => {
   if (__mode === 'enc') {
@@ -37,19 +36,17 @@ const signThis = (__jsonData, __key, __duration = null) => {
 }
 
 const apply = (__encryptedToken, __key) => {
-  const initiator = __encryptedToken.slice(0, 7)
-  const token = __encryptedToken.slice(7)
   const func = 'apply'
-
-  if (initiator !== 'resqhub') {
-    throw new SignerError(func, 'foreign')
-  }
-
   try {
+    const initiator = __encryptedToken.slice(0, 7)
+    const token = __encryptedToken.slice(7)
+    //
+    if (initiator !== 'resqhub') throw new SignerError(func, 'foreign')
+    //
     const decryptedToken = cjs.AES.decrypt(token, TOKENCRYPT).toString(cjs.enc.Utf8).split(':')
     const salt = decryptedToken[2]
     const comparedSignature = cjs.HmacSHA256(decryptedToken[0], __key + salt).toString()
-
+    //
     if (comparedSignature === decryptedToken[1]) {
       const jsonData = JSON.parse(atob(decryptedToken[0]))
       if (jsonData.eat < Math.round(new Date().getTime() / 1000) &&
@@ -60,14 +57,6 @@ const apply = (__encryptedToken, __key) => {
     if (e instanceof SignerError) throw e
     else throw new SignerError(func, 'invalid')
   }
-}
-
-const signUART = (userPayload) => {
-  return signThis(userPayload, HMACSHAKEY)
-}
-
-const applyUART = (UART) => {
-  return apply(UART, HMACSHAKEY)
 }
 
 const simpleHash = (__txt, salting = 'nosalt', mode = 256) => {
@@ -103,7 +92,7 @@ const compareHash = (__txt, __hash, mode = 256) => {
   const salt = (hash.split('.').length === 2) ? hash.split('.')[0] : ''
   const vhash = safeB64('dec', simpleHash(__txt, salt, mode))
   const func = 'compareHash'
-
+  //
   try {
     if (vhash === hash) return true
     throw new SignerError(func, 'mismatch')
@@ -136,9 +125,9 @@ const simpleDecrypt = (__cipher, __pwd) => {
   }
 }
 
-const cipherUpdateKey = async (__cipher, __oldKey, __newKey) => {
-  const decrypted = await cjs.AES.decrypt(__cipher, __oldKey).toString(cjs.enc.Utf8)
-  const encrypted = await cjs.AES.encrypt(decrypted, __newKey).toString()
+const cipherUpdateKey = (__cipher, __oldKey, __newKey) => {
+  const decrypted = cjs.AES.decrypt(__cipher, __oldKey).toString(cjs.enc.Utf8)
+  const encrypted = cjs.AES.encrypt(decrypted, __newKey).toString()
   return encrypted
 }
 
@@ -146,8 +135,6 @@ module.exports = {
   SignerError,
   signThis,
   apply,
-  signUART,
-  applyUART,
   simpleHash,
   compareHash,
   simpleEncrypt,

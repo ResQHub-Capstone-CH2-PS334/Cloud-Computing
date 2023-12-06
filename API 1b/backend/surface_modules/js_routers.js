@@ -27,19 +27,24 @@ const routers = [
     handler: methods.userLogin
   },
   {
-    method: 'POST',
+    method: 'GET',
     path: '/user-logout',
     handler: methods.userLogout
   },
   {
-    method: 'POST',
+    method: 'GET',
     path: '/view-userprivatedata',
     handler: methods.viewUserPrivateData
   },
   {
-    method: 'POST',
+    method: 'PUT',
     path: '/user-updatepassword',
     handler: methods.userUpdatePassword
+  },
+  {
+    method: 'GET',
+    path: '/request-at',
+    handler: methods.requestAT
   },
   {
     method: 'GET',
