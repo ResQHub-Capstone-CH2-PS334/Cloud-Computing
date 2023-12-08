@@ -10,7 +10,6 @@ const {
 const { nanoid } = require('nanoid')
 // const mail = require('./js_mail')
 
-const APPKEY = 'default-appkey'
 const TICKETKEY = signer.__SUPERSECRET_KEYS.__TICKETREGS
 const DBMANAGEDKEY = signer.__SUPERSECRET_KEYS.__USERDBIDLE
 
@@ -20,23 +19,12 @@ const isInstancesOf = (e) => {
      e instanceof FireError ||
      e instanceof SessionError)
 }
-const __generateKey__ = (size) => {
+const generateKey = (size) => {
   let k = ''
   for (let i = 0; i < size; i++) {
     k += Math.floor(Math.random() * 10)
   }
   return k
-}
-
-const isLegal = (__req, __tokenRequired = false) => {
-  if ((__req.headers.appkey !== APPKEY)) throw new MethodsError('isLegal', 'illegal')
-  if (__tokenRequired === 'rt' && __req.headers.rt === undefined) {
-    throw new MethodsError('isLegal', 'illegal')
-  }
-  if (__tokenRequired === 'at' && __req.headers.at === undefined) {
-    throw new MethodsError('isLegal', 'illegal')
-  }
-  return true
 }
 
 const __default = async (req, h) => {
@@ -53,9 +41,9 @@ const __default = async (req, h) => {
 const __buildvkey = async (req, h) => {
   const func = '__buildvkey'
   try {
-    isLegal(req)
+    sessionHandler.isLegal(req)
     const { email } = req.payload
-    const key = __generateKey__(7)
+    const key = generateKey(7)
     const collectionRef = fire('verifdata', signer.simpleHash(email))
     //
     try {
@@ -131,7 +119,7 @@ const __signUser = async (req, h) => {
   const hEmail = signer.simpleHash(payloads.email)
   //
   try {
-    isLegal(req)
+    sessionHandler.isLegal(req)
     signer.apply(payloads.ticket, TICKETKEY)
     //
     const pswd = signer.simpleHash(payloads.password, 'default', 512)
@@ -189,7 +177,7 @@ const __userLogin = async (req, h) => {
   const func = '__userLogin'
   //
   try {
-    isLegal(req)
+    sessionHandler.isLegal(req)
     const { username, password } = req.payload
     //
     const hUsrn = signer.simpleHash(username)
@@ -241,8 +229,8 @@ const __userLogout = async (req, h) => {
   //
   try {
     const AT = req.headers.at
-    isLegal(req, 'at')
-    await sessionHandler.validateRequest(AT)
+    sessionHandler.isLegal(req, 'at')
+    await sessionHandler.validateRequest(req)
     const jsonAT = sessionHandler.applyToken(AT)
     const hUsername = signer.simpleHash(jsonAT.username)
     const collectionRef = fire('userdata', hUsername)
@@ -283,8 +271,8 @@ const __userUpdatePassword = async (req, h) => {
   const func = '__userUpdatePassword'
   try {
     const AT = req.headers.at
-    isLegal(req, 'at')
-    const jsonAT = await sessionHandler.validateRequest(AT)
+    sessionHandler.isLegal(req, 'at')
+    const jsonAT = await sessionHandler.validateRequest(req)
     const { oldPassword, newPassword } = req.payload
     const hUsername = signer.simpleHash(jsonAT.username)
     const userDataRef = await fire('userdata', hUsername)
@@ -305,11 +293,9 @@ const __userUpdatePassword = async (req, h) => {
 const __viewUserPrivateData = async (req, h) => {
   const func = '__viewUserPrivateData'
   try {
-    const AT = req.headers.at
+    sessionHandler.isLegal(req, 'at')
     //
-    isLegal(req, 'at')
-    //
-    const jsonAT = await sessionHandler.validateRequest(AT)
+    const jsonAT = await sessionHandler.validateRequest(req)
     const hUsername = signer.simpleHash(jsonAT.username)
     const userPrivateData = await fire('userdata', hUsername).get('userPrivateData')
     const decryptedUserData = signer.simpleDecrypt(userPrivateData, jsonAT.activeSession)
@@ -331,10 +317,10 @@ const __viewUserPrivateData = async (req, h) => {
 const __requestAT = async (req, h) => {
   const RT = req.headers.rt
   try {
-    isLegal(req, 'rt')
+    sessionHandler.isLegal(req, 'rt')
     return h.response({ AT: await sessionHandler.requestAT(RT) })
   } catch (e) {
-    if (e instanceof MethodsError || e instanceof SignerError || e instanceof SessionError) {
+    if (isInstancesOf(e)) {
       return h.response(e.readError()).code(502)
     } else return h.response({ status: 'unknown?' })
   }

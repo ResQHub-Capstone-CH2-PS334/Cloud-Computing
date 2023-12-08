@@ -23,7 +23,8 @@ const __ERRLIB = {
   SessionError: {
     activeSessionMismatch: 'active session does not match' + ERRS[3],
     unknown: 'unidentified error' + ERRS[3],
-    wrongType: 'Expected either RT/AT, providing wrong type' + ERRS[3]
+    wrongType: 'Expected either RT/AT, providing wrong type' + ERRS[3],
+    illegal: 'Illegal access' + ERRS[3]
   }
 }
 

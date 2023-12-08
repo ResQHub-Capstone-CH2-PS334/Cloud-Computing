@@ -2,6 +2,19 @@ const fire = require('./js_fire')
 const signer = require('./js_signer')
 const { SignerError, SessionError } = require('./js_errorHandler')
 const HMACSHAKEY = '381n248392rnd71usuida92_29jfi3nf'
+const APPKEY = 'default-appkey'
+
+const isLegal = (__req, __tokenRequired = false) => {
+  const func = 'isLegal'
+  if ((__req.headers.appkey !== APPKEY)) throw new SessionError(func, 'illegal')
+  if (__tokenRequired === 'rt' && __req.headers.rt === undefined) {
+    throw new SessionError(func, 'illegal')
+  }
+  if (__tokenRequired === 'at' && __req.headers.at === undefined) {
+    throw new SessionError(func, 'illegal')
+  }
+  return true
+}
 
 const signToken = (__payload, __duration = null) => {
   return signer.signThis(__payload, HMACSHAKEY, __duration)
@@ -60,6 +73,7 @@ const validateRequest = async (__AT) => {
 }
 
 module.exports = {
+  isLegal,
   requestAT,
   signToken,
   applyToken,
