@@ -30,10 +30,6 @@ const signThis = (__jsonData, __key, __duration = null) => {
   const b64Data = btoa(JSON.stringify(jsonData))
   const salt = nanoid(16)
   const signature = cjs.HmacSHA256(b64Data, __key + salt)
-
-  console.log('b64-', b64Data)
-  console.log('sig-', signature.toString(cjs.enc.Base64))
-  console.log('salt-', salt)
   return 'resqhub' + cjs.AES.encrypt(
     b64Data + ':' + signature + ':' + salt,
     __SUPERSECRET_KEYS.__TOKENCRYPT).toString()

@@ -57,7 +57,7 @@ const requestAT = async (__RT) => {
       username: validatedRT.username,
       activeSession: validatedRT.activeSession,
       type: 'at'
-    }, 300)
+    }, 10)
     return AT
   } catch (e) {
     if (isInstancesOf(e)) throw e
@@ -69,7 +69,7 @@ const validateRequest = async (__req) => {
   const func = 'validateRequest'
   try {
     const AT = applyToken(__req.headers.at)
-    await sessionChecker(AT, 'at')
+    await sessionChecker(__req.headers.at, 'at')
     return AT
   } catch (e) {
     if (isInstancesOf(e)) throw e
