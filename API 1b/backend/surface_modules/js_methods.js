@@ -59,7 +59,11 @@ const __buildvkey = async (req, h) => {
     const collectionRef = fire('verifdata', signer.simpleHash(email))
     //
     try {
-      await collectionRef.get('registered')
+      const registered = await collectionRef.get('registered')
+      if (registered) {
+        return h.response({ status: 'registeredEmail' })
+      }
+      throw new MethodsError(func, 'unknown')
     } catch (e) {
       console.log(key)
       // mail.mailVerificaionKey(email, key)
@@ -71,7 +75,6 @@ const __buildvkey = async (req, h) => {
         status: 'success'
       })
     }
-    throw new MethodsError(func, 'registeredEmail')
   } catch (e) {
     if (isInstancesOf(e)) {
       return h.response(e.readError()).code(502)
@@ -94,7 +97,7 @@ const __verifvkey = async (req, h) => {
     const collectionRef = fire('verifdata', hashedEmail)
     const collectionRefData = await collectionRef.get(['registered', 'tokenKey'])
     const isRegistered = collectionRefData.registered
-    //
+
     if (isRegistered) throw new MethodsError(func, 'registeredEmail')
     //
     signer.apply(collectionRefData.tokenKey, vkey)
