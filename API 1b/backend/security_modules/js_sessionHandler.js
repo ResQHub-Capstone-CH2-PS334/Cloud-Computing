@@ -16,6 +16,11 @@ const isLegal = (__req, __tokenRequired = false) => {
   return true
 }
 
+const isInstancesOf = (e) => {
+  return (e instanceof SignerError ||
+    e instanceof SessionError)
+}
+
 const signToken = (__payload, __duration = null) => {
   return signer.signThis(__payload, HMACSHAKEY, __duration)
 }
@@ -38,7 +43,7 @@ const sessionChecker = async (__token, __expectedType) => {
     //
     return true
   } catch (e) {
-    if (e instanceof SignerError || e instanceof SessionError) throw e
+    if (isInstancesOf(e)) throw e
     else throw new SessionError(func, 'unknown')
   }
 }
@@ -55,19 +60,19 @@ const requestAT = async (__RT) => {
     }, 300)
     return AT
   } catch (e) {
-    if (e instanceof SessionError || e instanceof SignerError) throw e
+    if (isInstancesOf(e)) throw e
     else throw new SessionError(func, 'unknown')
   }
 }
 
-const validateRequest = async (__AT) => {
+const validateRequest = async (__req) => {
   const func = 'validateRequest'
   try {
-    const AT = applyToken(__AT)
-    await sessionChecker(__AT, 'at')
+    const AT = applyToken(__req.headers.at)
+    await sessionChecker(AT, 'at')
     return AT
   } catch (e) {
-    if (e instanceof SignerError || e instanceof SessionError) throw e
+    if (isInstancesOf(e)) throw e
     else throw new SessionError(func, 'unknown')
   }
 }

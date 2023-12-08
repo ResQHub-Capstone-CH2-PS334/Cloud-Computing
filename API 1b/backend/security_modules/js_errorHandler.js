@@ -71,9 +71,17 @@ class FireError extends DefaultError {
   }
 }
 
+const isInstancesOf = (e) => {
+  return (e instanceof SignerError ||
+    e instanceof SessionError ||
+    e instanceof FireError ||
+    e instanceof MethodsError)
+}
+
 module.exports = {
   MethodsError,
   SignerError,
   SessionError,
-  FireError
+  FireError,
+  isInstancesOf
 }
