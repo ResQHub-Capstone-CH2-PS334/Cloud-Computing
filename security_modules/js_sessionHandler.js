@@ -57,7 +57,7 @@ const requestAT = async (__RT) => {
       username: validatedRT.username,
       activeSession: validatedRT.activeSession,
       type: 'at'
-    }, 300)
+    }, 5)
     return AT
   } catch (e) {
     if (isInstancesOf(e)) throw e
