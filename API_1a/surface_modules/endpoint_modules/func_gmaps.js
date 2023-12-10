@@ -7,7 +7,6 @@ const internalGetDistance = async (__query) => {
   const getFetch = await fetch(`https://maps.googleapis.com/maps/api/distancematrix/${__query}&${KEY}`, {
     method: 'GET'
   })
-  console.log(getFetch)
   const dataFetch = await getFetch.json()
   const data = dataFetch.rows[0].elements.map((data) => {
     return {
@@ -47,6 +46,8 @@ const internalGetAllInformation = (__data) => {
       rating: a.rating === undefined ? 'not provided' : a.rating,
       ratingCount: a.userRatingCount === undefined ? 'not provided' : a.userRatingCount,
       uri: a.googleMapsUri,
+      driving: a.driving,
+      walking: a.walking,
       regOpenNow,
       regDescriptions,
       curOpenNow,
@@ -105,6 +106,12 @@ const getNearby = async (__type, __lat, __long, __rad) => {
         driving: await internalGetDistance(distanceMatrixQuery + '&mode=driving'),
         walking: await internalGetDistance(distanceMatrixQuery + '&mode=walking')
       }
+      console.log(trafficInfo)
+      for (const i in dataPlaces) {
+        dataPlaces[i].driving = trafficInfo.driving[i]
+        dataPlaces[i].walking = trafficInfo.walking[i]
+      }
+      console.log(dataPlaces)
       const phoneProvided = dataPlaces.filter((a) => a.nationalPhoneNumber !== undefined)
       const phoneProvidedBasicInfo = internalGetAllInformation(phoneProvided)
       const noPhoneProvided = dataPlaces.filter((a) => a.nationalPhoneNumber === undefined)

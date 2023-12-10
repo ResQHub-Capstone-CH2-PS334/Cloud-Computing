@@ -8,27 +8,24 @@ const transcribe = async (inputFile) => {
     const convertedBuffers = []
     const q = ffmpeg()
       .setFfmpegPath(ffmpegPath)
-      .input(inputFile + 'j')
+      .input(inputFile)
       .inputFormat('m4a')
       .audioCodec('pcm_s16le')
       .audioFrequency(16000)
       .audioChannels(1)
       .toFormat('wav')
       .on('error', () => {
-        console.log('va')
         reject(new errorHandler.TranscriberError(func, 'invalid'))
       })
     const ffstream = q.pipe()
     ffstream
       .on('error', () => {
-        console.log('vff')
         reject(new errorHandler.TranscriberError(func, 'invalid'))
       })
       .on('data', function (chunk) {
         convertedBuffers.push(chunk)
       })
       .on('end', () => {
-        console.log('vx')
         const amalgamatedBuffer = Buffer.concat(convertedBuffers)
         resolve(amalgamatedBuffer)
       })

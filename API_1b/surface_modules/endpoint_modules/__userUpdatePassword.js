@@ -17,7 +17,7 @@ const __endMethod = async (req, h) => {
     signer.compareHash(oldPassword, hPassword, 512)
     //
     userDataRef.write({ pswd: hNewPassword }, { merge: true })
-    return h.response({ status: 'password-updated' })
+    return h.response({ status: 'password updated' })
   } catch (e) {
     if (errorHandler.isInstancesOf(e)) {
       return h.response(e.readError()).code(502)

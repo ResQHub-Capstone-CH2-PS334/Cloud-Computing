@@ -7,8 +7,8 @@ const maps = require('./func_gmaps')
 const __endMethod = async (req, h) => {
   const func = '__getStation'
   try {
-    // sessionHandler.isLegal(req, 'at')
-    // await sessionHandler.validateRequest(req)
+    sessionHandler.isLegal(req, 'at')
+    await sessionHandler.validateRequest(req)
     //
     const { type, lat, long, rad } = req.payload
     const data = await maps.getNearby(type, lat, long, rad)

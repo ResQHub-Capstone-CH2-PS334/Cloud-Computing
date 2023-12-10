@@ -14,11 +14,11 @@ const client = new speech.SpeechClient({
 const __endMethod = async (req, h) => {
   const func = '__transcribe'
   try {
-    // sessionHandler.isLegal(req, 'at')
-    // await sessionHandler.validateRequest(req)
+    sessionHandler.isLegal(req, 'at')
+    await sessionHandler.validateRequest(req)
     //
     const payloads = req.payload
-    const gcsUri = 'gs://cloud-samples-data/speech/brooklyn_bridge.raw'
+    // const gcsUri = 'gs://cloud-samples-data/speech/brooklyn_bridge.raw'
     const audioData = payloads.audioFile
     const randomName = nanoid(12)
 
@@ -26,26 +26,22 @@ const __endMethod = async (req, h) => {
 
     try {
       const p = await transcriber.transcribe(randomName + '.tempAudio')
-      console.log('x', p)
+      const audio = { content: p }
+      const config = { encoding: 'LINEAR16', sampleRateHertz: 16000, languageCode: 'en-Us' }
+      const request = { audio, config }
+
+      const [response] = await client.recognize(request)
+      const transcription = response.results
+        .map(result => result.alternatives[0].transcript)
+        .join('\n')
+      console.log('t->', transcription)
+
+      return h.response({ status: 'success', data: transcription })
     } catch (e) {
       console.log(e)
       if (errorHandler.isInstancesOf(e)) return h.response(e.readError()).code(502)
       else return h.response({ status: 'unknown?' })
     }
-
-    // console.log('j', q)
-    /* 
-    const audio = { content: p }
-    const config = { encoding: 'LINEAR16', sampleRateHertz: 16000, languageCode: 'en-Us' }
-    const request = { audio, config }
-    //
-    const [response] = await client.recognize(request)
-    const transcription = response.results
-      .map(result => result.alternatives[0].transcript)
-      .join('\n')
-    console.log('t->', transcription)
-    */
-    return h.response({ status: 'success', data: 'b' })
   } catch (e) {
     console.log(e)
     if (errorHandler.isInstancesOf(e)) return h.response(e.readError()).code(502)

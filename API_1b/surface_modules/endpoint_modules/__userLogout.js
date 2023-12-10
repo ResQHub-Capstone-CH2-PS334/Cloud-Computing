@@ -32,7 +32,7 @@ const __endMethod = async (req, h) => {
       activeSession: 'no-session'
     }, { merge: true })
 
-    return h.response({ status: 'logged-out' })
+    return h.response({ status: 'logged out' })
   } catch (e) {
     if (errorHandler.isInstancesOf(e)) {
       return h.response(e.readError()).code(502)

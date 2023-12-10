@@ -1,4 +1,10 @@
-const ERRS = [' (SignerError)', ' (MethodsError)', '(FireError)', ' (SessionError)']
+const ERRS = [
+  ' (SignerError)',
+  ' (MethodsError)',
+  '(FireError)',
+  ' (SessionError)',
+  ' (MapsError)'
+]
 const __ERRLIB = {
   SignerError: {
     foreign: 'foreign token' + ERRS[0],
@@ -25,6 +31,13 @@ const __ERRLIB = {
     unknown: 'unidentified error' + ERRS[3],
     wrongType: 'Expected either RT/AT, providing wrong type' + ERRS[3],
     illegal: 'Illegal access' + ERRS[3]
+  }, 
+  MapsError: {
+    nothing: 'found nothing' + ERRS[4],
+    unknown: 'unidentified error' + ERRS[0]
+  },
+  TranscriberError: {
+    invalid: 'invalid audio file'
   }
 }
 
@@ -71,11 +84,27 @@ class FireError extends DefaultError {
   }
 }
 
+class MapsError extends DefaultError {
+  constructor (__funcName, __status) {
+    super(__funcName, __status)
+    this.description = __ERRLIB.MapsError[__status]
+  }
+}
+
+class TranscriberError extends DefaultError {
+  constructor (__funcName, __status) {
+    super(__funcName, __status)
+    this.description = __ERRLIB.TranscriberError[__status]
+  }
+}
+
 const isInstancesOf = (e) => {
   return (e instanceof SignerError ||
     e instanceof SessionError ||
     e instanceof FireError ||
-    e instanceof MethodsError)
+    e instanceof MethodsError ||
+    e instanceof MapsError ||
+    e instanceof TranscriberError)
 }
 
 module.exports = {
@@ -83,5 +112,7 @@ module.exports = {
   SignerError,
   SessionError,
   FireError,
+  MapsError,
+  TranscriberError,
   isInstancesOf
 }
