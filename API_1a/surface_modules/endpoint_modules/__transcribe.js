@@ -3,9 +3,10 @@
 const sessionHandler = require('../../../security_modules/js_sessionHandler')
 const errorHandler = require('../../../security_modules/js_errorHandler')
 const speech = require('@google-cloud/speech')
-const fs = require('fs')
 const { nanoid } = require('nanoid')
 const transcriber = require('./func_transcriber')
+const { Storage } = require('@google-cloud/storage')
+const storageKey = require('./keys/storage.json')
 
 const client = new speech.SpeechClient({
   keyFilename: 'surface_modules/endpoint_modules/keys/speech-to-text.json'
@@ -14,28 +15,35 @@ const client = new speech.SpeechClient({
 const __endMethod = async (req, h) => {
   const func = '__transcribe'
   try {
-    sessionHandler.isLegal(req, 'at')
-    await sessionHandler.validateRequest(req)
+    // sessionHandler.isLegal(req, 'at')
+    // await sessionHandler.validateRequest(req)
     //
     const payloads = req.payload
-    // const gcsUri = 'gs://cloud-samples-data/speech/brooklyn_bridge.raw'
     const audioData = payloads.audioFile
+    const storage = new Storage({
+      credentials: storageKey,
+      projectId: 'resqhub-capstone'
+    })
+    const myBucket = storage.bucket('sidedata-database')
     const randomName = nanoid(12)
-
-    fs.writeFileSync(randomName + '.tempAudio', audioData)
-
+    await myBucket.file(`${randomName}.m4a`).save(audioData)
+    const [url] = await myBucket.file(`${randomName}.m4a`).getSignedUrl({
+      version: 'v4',
+      action: 'read',
+      expires: Date.now() + 60 * 1000 // a minute
+    })
+    //
     try {
-      const p = await transcriber.transcribe(randomName + '.tempAudio')
+      const p = await transcriber.transcribe(url)
       const audio = { content: p }
-      const config = { encoding: 'LINEAR16', sampleRateHertz: 16000, languageCode: 'en-Us' }
+      const config = { encoding: 'LINEAR16', sampleRateHertz: 16000, languageCode: 'id-ID' }
       const request = { audio, config }
-
       const [response] = await client.recognize(request)
+      //
       const transcription = response.results
         .map(result => result.alternatives[0].transcript)
         .join('\n')
-      console.log('t->', transcription)
-
+      //
       return h.response({ status: 'success', data: transcription })
     } catch (e) {
       console.log(e)

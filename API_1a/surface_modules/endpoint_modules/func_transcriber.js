@@ -1,14 +1,15 @@
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path
 const ffmpeg = require('fluent-ffmpeg')
+ffmpeg.setFfmpegPath(ffmpegPath)
 const errorHandler = require('../../../security_modules/js_errorHandler')
 
-const transcribe = async (inputFile) => {
+const transcribe = async (fileUrl) => {
   const func = '__transcribe'
+  //
   return new Promise((resolve, reject) => {
     const convertedBuffers = []
     const q = ffmpeg()
-      .setFfmpegPath(ffmpegPath)
-      .input(inputFile)
+      .input(fileUrl)
       .inputFormat('m4a')
       .audioCodec('pcm_s16le')
       .audioFrequency(16000)

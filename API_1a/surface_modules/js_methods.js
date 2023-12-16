@@ -1,5 +1,6 @@
 const getStationEndPoint = require('./endpoint_modules/__getStation')
 const transcribeEndPoint = require('./endpoint_modules/__transcribe')
+const predictEndPoint = require('./endpoint_modules/__predict')
 
 const __home = (req, h) => {
   return h.response({ status: 'home' })
@@ -13,8 +14,13 @@ const __transcribe = async (req, h) => {
   return await transcribeEndPoint.__endMethod(req, h)
 }
 
+const __predict = async (req, h) => {
+  return await predictEndPoint.__endMethod(req, h)
+}
+
 module.exports = {
   home: __home,
   getStation: __getStation,
-  transcribe: __transcribe
+  transcribe: __transcribe,
+  predict: __predict
 }

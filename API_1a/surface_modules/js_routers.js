@@ -21,6 +21,18 @@ const routers = [
         multipart: true
       }
     }
+  },
+  {
+    method: 'POST',
+    path: '/predict',
+    handler: methods.predict,
+    options: {
+      payload: {
+        output: 'data',
+        parse: true,
+        multipart: true
+      }
+    }
   }
 ]
 
