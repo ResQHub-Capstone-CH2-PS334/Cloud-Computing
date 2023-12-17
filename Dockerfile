@@ -1,10 +1,9 @@
 FROM node:18.12.1
 WORKDIR /app
 
-ARG APIVER = rqh-core
+ARG APIVER = rqh-auth
 
 RUN mkdir -p /app/$APIVER/app/security_modules /tmp/
-
 COPY /$APIVER/ /app/$APIVER
 COPY /security_modules/ /app/security_modules
 
