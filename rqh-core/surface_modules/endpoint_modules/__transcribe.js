@@ -6,12 +6,12 @@ const speech = require('@google-cloud/speech')
 const { nanoid } = require('nanoid')
 const transcriber = require('./func_transcriber')
 const { Storage } = require('@google-cloud/storage')
-const storageKey = require('./keys/storage.json')
+const storageKey = require('./keys/key-storage.json')
 
 const INDEV = false
 
 const client = new speech.SpeechClient({
-  keyFilename: 'surface_modules/endpoint_modules/keys/speech-to-text.json'
+  keyFilename: 'surface_modules/endpoint_modules/keys/key-stt.json'
 })
 
 const __endMethod = async (req, h) => {

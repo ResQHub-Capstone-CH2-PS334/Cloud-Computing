@@ -1,6 +1,11 @@
 const utils = require('./js_utils')
 
+// ================= FOR DEPLOYER ===================  //
+// Please change these URLs accordingly                //
+// Read documentation for full instructions            //
+// =================================================== //
 const __RQH_AUTH_URL = 'https://rqh-auth-demo-y2mk2btioa-et.a.run.app/'
+const __RQH_CORE_URL = 'https://rqh-core-demo-y2mk2btioa-et.a.run.app/'
 
 const buildVkey = async (req, h) => {
   return await utils.makeRequest({
@@ -103,6 +108,46 @@ const resetPassword = async (req, h) => {
   }, h)
 }
 
+const getStation = async (req, h) => {
+  return await utils.makeRequest({
+    __url: __RQH_CORE_URL + 'get-station',
+    __headers: utils.getHeaders(req, ['appkey', 'at']),
+    __method: 'POST',
+    __payloads: req.payload,
+    __requiredPayloads: ['type', 'lat', 'long', 'rad']
+  }, h)
+}
+
+const transcribe = async (req, h) => {
+  return await utils.makeRequest({
+    __url: __RQH_CORE_URL + 'transcribe',
+    __headers: utils.getHeaders(req, ['appkey', 'at']),
+    __method: 'POST',
+    __payloads: req.payload,
+    __requiredPayloads: ['audioFile', 'filename']
+  }, h)
+}
+
+const getAudio = async (req, h) => {
+  return await utils.makeRequest({
+    __url: __RQH_CORE_URL + 'get-audio',
+    __headers: utils.getHeaders(req, ['appkey', 'at']),
+    __method: 'POST',
+    __payloads: req.payload,
+    __requiredPayloads: ['filename']
+  }, h)
+}
+
+const predict = async (req, h) => {
+  return await utils.makeRequest({
+    __url: __RQH_CORE_URL + 'predict',
+    __headers: utils.getHeaders(req, ['appkey', 'at']),
+    __method: 'POST',
+    __payloads: req.payload,
+    __requiredPayloads: ['fromID', 'fromLive']
+  }, h)
+}
+
 module.exports = {
   buildVkey,
   verifVkey,
@@ -113,5 +158,9 @@ module.exports = {
   requestResetPassword,
   userLogout,
   userLogin,
-  resetPassword
+  resetPassword,
+  getStation,
+  transcribe,
+  getAudio,
+  predict
 }

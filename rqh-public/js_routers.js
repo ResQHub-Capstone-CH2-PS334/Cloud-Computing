@@ -55,6 +55,40 @@ const routers = [
     method: 'GET',
     path: '/reset-password',
     handler: methods.resetPassword
+  },
+  {
+    method: 'POST',
+    path: '/get-station',
+    handler: methods.getStation
+  },
+  {
+    method: 'POST',
+    path: '/transcribe',
+    handler: methods.transcribe,
+    options: {
+      payload: {
+        output: 'data',
+        parse: true,
+        multipart: true
+      }
+    }
+  },
+  {
+    method: 'POST',
+    path: '/predict',
+    handler: methods.predict,
+    options: {
+      payload: {
+        output: 'data',
+        parse: true,
+        multipart: true
+      }
+    }
+  },
+  {
+    method: 'POST',
+    path: '/get-audio',
+    handler: methods.getAudio
   }
 ]
 

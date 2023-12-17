@@ -3,7 +3,7 @@ const fire = require('../../../security_modules/js_fire')
 const sessionHandler = require('../../../security_modules/js_sessionHandler')
 const errorHandler = require('../../../security_modules/js_errorHandler')
 const { Storage } = require('@google-cloud/storage')
-const storageKey = require('./keys/storage.json')
+const storageKey = require('./keys/key-storage.json')
 
 const INDEV = false
 
