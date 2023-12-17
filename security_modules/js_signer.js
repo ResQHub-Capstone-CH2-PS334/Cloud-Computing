@@ -8,7 +8,7 @@ const __SUPERSECRET_KEYS = {
   __TICKETREGS: 'n3p283jcos83_unid8271998?i2j3847',
   __USERDBIDLE: 'poru489r2--23?jdf893298c2898r2i3'
 }
-const CKEYS = require('./keys/constant-keys.json')
+const CKEYS = require('./keys/key-constant.json')
 
 const safeB64 = (__mode, __input, __convert = true) => {
   if (__convert) {

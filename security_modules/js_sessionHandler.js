@@ -1,7 +1,7 @@
 const fire = require('./js_fire')
 const signer = require('./js_signer')
 const { SignerError, SessionError } = require('./js_errorHandler')
-const CKEYS = require('./keys/constant-keys.json')
+const CKEYS = require('./keys/key-constant.json')
 
 const isLegal = (__req, __tokenRequired = false) => {
   const func = 'isLegal'

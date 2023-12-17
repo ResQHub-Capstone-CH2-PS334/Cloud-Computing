@@ -18,7 +18,7 @@ const internalCheckRequestRequirement = (__payload, __require) => {
 const internalEvokeCloudRun = async (__url) => {
   const url = __url
   const jwtClient = new google.auth.JWT({
-    keyFile: './keys/cloudrun-invoker.json',
+    keyFile: './keys/key-cloudrun.json',
     scopes: []
   })
   const token = await jwtClient.fetchIdToken(url)

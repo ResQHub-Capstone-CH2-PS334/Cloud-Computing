@@ -2,7 +2,7 @@ const signer = require('../../../security_modules/js_signer')
 const fire = require('../../../security_modules/js_fire')
 const sessionHandler = require('../../../security_modules/js_sessionHandler')
 const errorHandler = require('../../../security_modules/js_errorHandler')
-const CKEYS = require('../../../security_modules/keys/constant-keys.json')
+const CKEYS = require('../../../security_modules/keys/key-constant.json')
 const mail = require('../js_mail')
 
 // ================= FOR DEPLOYER ===================  //
