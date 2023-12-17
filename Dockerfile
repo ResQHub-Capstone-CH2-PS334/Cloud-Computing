@@ -1,15 +1,17 @@
 FROM node:18.12.1
 WORKDIR /app
 
-RUN mkdir -p /app/API_1a /app/security_modules /tmp/
+ARG APIVER = rqh-core
 
-COPY /API_1a/ /app/API_1a
+RUN mkdir -p /app/$APIVER/app/security_modules /tmp/
+
+COPY /$APIVER/ /app/$APIVER
 COPY /security_modules/ /app/security_modules
 
-WORKDIR /app/API_1a
+WORKDIR /app/$APIVER
 
 RUN npm install
-
+RUN npm install @tensorflow/tfjs-node
 ENV PORT 9001
 EXPOSE 9001
 CMD ["npm", "run", "start"]

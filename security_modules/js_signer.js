@@ -8,15 +8,23 @@ const __SUPERSECRET_KEYS = {
   __TICKETREGS: 'n3p283jcos83_unid8271998?i2j3847',
   __USERDBIDLE: 'poru489r2--23?jdf893298c2898r2i3'
 }
+const CKEYS = require('./keys/constant-keys.json')
 
-const TOKENCRYPT = 'kcTRA7prpdN_plYmoZHz1L7V6N1lP61t'
-
-const safeB64 = (__mode, __input) => {
-  if (__mode === 'enc') {
-    return btoa(__input).replace('/', '_').replace('+', '-')
-  }
-  if (__mode === 'dec') {
-    return atob(__input.replace('-', '+').replace('/', '-'))
+const safeB64 = (__mode, __input, __convert = true) => {
+  if (__convert) {
+    if (__mode === 'enc') {
+      return btoa(__input).replaceAll('/', '_').replaceAll('+', '-')
+    }
+    if (__mode === 'dec') {
+      return atob(__input.replaceAll('-', '+').replaceAll('_', '/')) // -
+    }
+  } else {
+    if (__mode === 'enc') {
+      return __input.replaceAll('/', '_').replaceAll('+', '-')
+    }
+    if (__mode === 'dec') {
+      return __input.replaceAll('-', '+').replaceAll('_', '/')
+    }
   }
 }
 
@@ -30,9 +38,7 @@ const signThis = (__jsonData, __key, __duration = null) => {
   const b64Data = btoa(JSON.stringify(jsonData))
   const salt = nanoid(16)
   const signature = cjs.HmacSHA256(b64Data, __key + salt)
-  return 'resqhub' + cjs.AES.encrypt(
-    b64Data + ':' + signature + ':' + salt,
-    __SUPERSECRET_KEYS.__TOKENCRYPT).toString()
+  return 'resqhub' + simpleEncrypt(b64Data + ':' + signature + ':' + salt, CKEYS.TOKENCRYPT)
 }
 
 const apply = (__encryptedToken, __key) => {
@@ -43,7 +49,8 @@ const apply = (__encryptedToken, __key) => {
     //
     if (initiator !== 'resqhub') throw new SignerError(func, 'foreign')
     //
-    const decryptedToken = cjs.AES.decrypt(token, TOKENCRYPT).toString(cjs.enc.Utf8).split(':')
+    const decryptedToken = simpleDecrypt(token, CKEYS.TOKENCRYPT).split(':')
+    // cjs.AES.decrypt(token, CKEYS.TOKENCRYPT).toString(cjs.enc.Utf8).split(':')
     const salt = decryptedToken[2]
     const comparedSignature = cjs.HmacSHA256(decryptedToken[0], __key + salt).toString()
     //
@@ -107,7 +114,7 @@ const simpleEncrypt = (__plain, __pwd) => {
   try {
     const data = (typeof __plain === 'object') ? JSON.stringify(__plain) : __plain
     const encrypted = cjs.AES.encrypt(btoa(data), __pwd).toString()
-    return encrypted
+    return safeB64('enc', encrypted, false)
   } catch (e) {
     if (e instanceof SignerError) throw e
     else throw new SignerError(func, 'unknown')
@@ -117,7 +124,8 @@ const simpleEncrypt = (__plain, __pwd) => {
 const simpleDecrypt = (__cipher, __pwd) => {
   const func = 'simpleDecrypt'
   try {
-    const decrypted = atob(cjs.AES.decrypt(__cipher, __pwd).toString(cjs.enc.Utf8))
+    const cipher = safeB64('dec', __cipher, false)
+    const decrypted = atob(cjs.AES.decrypt(cipher, __pwd).toString(cjs.enc.Utf8))
     return decrypted
   } catch (e) {
     if (e instanceof SignerError) throw e
@@ -126,8 +134,10 @@ const simpleDecrypt = (__cipher, __pwd) => {
 }
 
 const cipherUpdateKey = (__cipher, __oldKey, __newKey) => {
-  const decrypted = cjs.AES.decrypt(__cipher, __oldKey).toString(cjs.enc.Utf8)
-  const encrypted = cjs.AES.encrypt(decrypted, __newKey).toString()
+  const decrypted = simpleDecrypt(__cipher, __oldKey)
+  // cjs.AES.decrypt(__cipher, __oldKey).toString(cjs.enc.Utf8)
+  const encrypted = simpleEncrypt(decrypted, __newKey)
+  // cjs.AES.encrypt(decrypted, __newKey).toString()
   return encrypted
 }
 

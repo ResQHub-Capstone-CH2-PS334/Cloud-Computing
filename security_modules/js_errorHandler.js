@@ -5,6 +5,7 @@ const ERRS = [
   ' (SessionError)',
   ' (MapsError)'
 ]
+
 const __ERRLIB = {
   SignerError: {
     foreign: 'foreign token' + ERRS[0],
@@ -31,10 +32,11 @@ const __ERRLIB = {
     unknown: 'unidentified error' + ERRS[3],
     wrongType: 'Expected either RT/AT, providing wrong type' + ERRS[3],
     illegal: 'Illegal access' + ERRS[3]
-  }, 
+  },
   MapsError: {
     nothing: 'found nothing' + ERRS[4],
-    unknown: 'unidentified error' + ERRS[0]
+    unknown: 'unidentified error' + ERRS[0],
+    outage: 'API is expired or not deactivated!'
   },
   TranscriberError: {
     invalid: 'invalid audio file'
