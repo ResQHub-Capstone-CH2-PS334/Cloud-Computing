@@ -1,11 +1,7 @@
 const utils = require('./js_utils')
 
-// ================= FOR DEPLOYER ===================  //
-// Please change these URLs accordingly                //
-// Read documentation for full instructions            //
-// =================================================== //
-const __RQH_AUTH_URL = 'https://rqh-auth-demo-y2mk2btioa-et.a.run.app/'
-const __RQH_CORE_URL = 'https://rqh-core-demo-y2mk2btioa-et.a.run.app/'
+const __RQH_AUTH_URL = '%%BASH%%:RQH_AUTH_URL'
+const __RQH_CORE_URL = '%%BASH%%:RQH_CORE_URL'
 
 const buildVkey = async (req, h) => {
   return await utils.makeRequest({
