@@ -13,7 +13,8 @@
   "license": "ISC",
   "dependencies": {
     "@hapi/hapi": "^21.3.2",
-    "googleapis": "^129.0.0"
+    "googleapis": "^129.0.0",
+    "node-fetch": "^1.7.3"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
