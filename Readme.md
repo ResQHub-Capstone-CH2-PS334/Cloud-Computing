@@ -36,12 +36,8 @@ Version 0
 
 ## 🔥 Usage (Full Documentation)
 Please refer to this document:
-<<<<<<< HEAD
-https://storage.googleapis.com/draculesti/Version%201%20Documentation.pdf
-=======
 (OLD DOCUMENT)
 https://storage.googleapis.com/draculesti/Version%201%20Documentation.pdf
 
 (NEW DOCUMENT)
 is being written...
->>>>>>> dev
