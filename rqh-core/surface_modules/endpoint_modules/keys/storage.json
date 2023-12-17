@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "resqhub-capstone",
+  "private_key_id": "fa804756b3b0f7587ddab3b9055f614be04d160c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCUP4FqbcOTp3Rr\nwrRWNYE/DBJDfvEuPEhB8tKp2wwgpUrQ0wUzPh8nqu4KUj6Di/bIUBy3bzKRWJXt\nHD3uHkQuEXchkC+ucl14BVtW9n2wiUqy/MvFZqlyCqWEPk9GwwMmoBs/hncuyUr+\n7SLPldVoaTSMpmgJ1FwdPEBT9AayTEPUf3H+DKd4pKKxJbyMACveXKQHGSa7s/4t\nW19mzWIsVY9GvcpHWOqcH4GFFGoWCY3elOzR1Nqi2eSYUDLNWghW1CsGXm3AYJun\n7ViXfjK3w96TneNyVn0CY57gIIk9+21yek1msoQc/goNIYWouI95IiOetfzLPiMJ\n93KhfROjAgMBAAECggEAFVabZk98o6+qPRU48jcLA/aqWFHDcwAVTHzK9XeZ5Bxh\nS56GyeyVUmyIN9nFCsKQ18iu4XkIInie7T1amAAo7dKbaawrLiUNrsgNRilTnR9I\ng8E0WWpgqxFnkpnfZ6mL4LmR7SUJ2aT6qP1GvJzDVh8yg6jeInARKYTHI5kP2luS\nIFpoU+PdV3hsPTkARM74i1S4Jf459g6cj3Z+shlu7wurlxvxiU1oZNC8ZxZ9dyot\nhYfwq/01OPQp8uyK80xqOSKs0G9g62PleFWH9y06FFJajlfpwcT28sf1jIWaHhz0\n8/UkCSIOPrdj1QlA9dTFc/W+DjVJVCjFek0jHHRTJQKBgQDEh9I5IWGel58RWN8T\nlP1HPBmAR1G316lbc4hZqr6UCWzWFREjdQuqjTM6P68JNg3qJLFQRzJM8aVkuMFI\n1dKFhqopVFJ8g8T0eZaMeyiTUTHxGOCIk40QP807zgSBWsvPmOLFSGgBF8lEWL7l\n1fhdtyvvTxeLoguT+NxQk+ndbQKBgQDBG38i6sip1OSOsLxdEHOTRQMxf3pvHR/9\ng9cZDxxuqPAPhbv+kQSBV6njQNADKYdC0GyJaAzs4UCBneW7lAxt4Q0nzJd6UGId\nWAqhTa4i441+bcJlO20oZYhjZHO3IbJwf+uBvhC0vm4rH1blaZ2CKYHRHOSHulbi\nXs8P74xbTwKBgQCWCNqEoudTm4zkQWSMHoH9j/Qn6kqIfyvblSfSzHcRrOBZz1t2\nJjTxzzn8jgGilpGo3ro+/xt3gkMx0Zo9cH93UIc3ZhhS1oXV3b0BIkSnsqTd2pAP\ntBVNAmg779ugpSBTK/RziANeUjpk4xtZezBQ2zW/TDI9d0g/fw0ytrkjQQKBgBv9\nO0k5VIphJBuWfEbU6puO5i6XdoyCYS+im1uzeACGFf15+cylAk0pAqPAsiWzMDq7\n8O9dmHoBEBN5amHszHxkoT6ChfYhjocISsokczf1WX3YtNNtcJ3pUYJufeMuTCnI\nML9maA96hodTjInF7CGAmKNRl8IgfRVkfoilxOc7AoGBAJb8USvNdEpTc+BZOvxX\nMizHsQFx5JCyF80HD5BBXTOiZkaiQDVcST+Bo5rZROobMXOpuPgOX9r1LAPYao7S\nEkxkQDYFqULSJZPRaQsJHoQTBiRiR4Bq+CF5yThMZilfiNHzfIb4R8Nf96jBdF9U\ndUNkSShHNobB+u8UaqRjfzu3\n-----END PRIVATE KEY-----\n",
+  "client_email": "storage-sideapp-access@resqhub-capstone.iam.gserviceaccount.com",
+  "client_id": "115155714095795683793",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/storage-sideapp-access%40resqhub-capstone.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

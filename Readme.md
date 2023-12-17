@@ -1,5 +1,16 @@
-# Version 1
+# Version 2
 ## ➡️ Changes
+Version 3 (upcoming)
+- Final rqh-auth API and rqh-core API
+- Make rqh-auth and rqh-core APIs private
+- Create API frontend (public) from rqh-public
+
+Version 2
+- Added ML model (still required an improvement!)
+- Enabled API for Cloud Vision and Speech-to-Text
+- Advancement of rqh-core API
+- Finalizing all API
+
 Version 1
 - Added massive improvement to rqh-auth API
 - Added rqh-core API
@@ -25,4 +36,12 @@ Version 0
 
 ## 🔥 Usage (Full Documentation)
 Please refer to this document:
+<<<<<<< HEAD
 https://storage.googleapis.com/draculesti/Version%201%20Documentation.pdf
+=======
+(OLD DOCUMENT)
+https://storage.googleapis.com/draculesti/Version%201%20Documentation.pdf
+
+(NEW DOCUMENT)
+is being written...
+>>>>>>> dev

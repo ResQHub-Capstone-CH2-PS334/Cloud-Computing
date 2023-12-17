@@ -1,12 +1,11 @@
 const fire = require('./js_fire')
 const signer = require('./js_signer')
 const { SignerError, SessionError } = require('./js_errorHandler')
-const HMACSHAKEY = '381n248392rnd71usuida92_29jfi3nf'
-const APPKEY = 'default-appkey'
+const CKEYS = require('./keys/constant-keys.json')
 
 const isLegal = (__req, __tokenRequired = false) => {
   const func = 'isLegal'
-  if ((__req.headers.appkey !== APPKEY)) throw new SessionError(func, 'illegal')
+  if ((__req.headers.appkey !== CKEYS.APPKEY)) throw new SessionError(func, 'illegal')
   if (__tokenRequired === 'rt' && __req.headers.rt === undefined) {
     throw new SessionError(func, 'illegal')
   }
@@ -22,11 +21,11 @@ const isInstancesOf = (e) => {
 }
 
 const signToken = (__payload, __duration = null) => {
-  return signer.signThis(__payload, HMACSHAKEY, __duration)
+  return signer.signThis(__payload, CKEYS.HMACSHAKEY, __duration)
 }
 
 const applyToken = (__token) => {
-  return signer.apply(__token, HMACSHAKEY)
+  return signer.apply(__token, CKEYS.HMACSHAKEY)
 }
 
 const sessionChecker = async (__token, __expectedType) => {
@@ -57,7 +56,7 @@ const requestAT = async (__RT) => {
       username: validatedRT.username,
       activeSession: validatedRT.activeSession,
       type: 'at'
-    }, 5)
+    }, 30) // 30 seconds
     return AT
   } catch (e) {
     if (isInstancesOf(e)) throw e
