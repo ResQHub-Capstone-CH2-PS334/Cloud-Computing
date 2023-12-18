@@ -1,6 +1,6 @@
 const utils = require('./js_utils')
 
-const __RQH_AUTH_URL = 'https://rqh-auth-6old2slxmq-et.a.run.app/'
+const __RQH_AUTH_URL = '%%BASH%%:RQH_AUTH_URL'
 const __RQH_CORE_URL = '%%BASH%%:RQH_CORE_URL'
 
 const buildVkey = async (req, h) => {
