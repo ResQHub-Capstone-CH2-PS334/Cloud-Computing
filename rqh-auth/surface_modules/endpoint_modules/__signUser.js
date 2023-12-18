@@ -13,7 +13,10 @@ const __endMethod = async (req, h) => {
   //
   try {
     sessionHandler.isLegal(req)
-    signer.apply(payloads.ticket, CKEYS.TICKETREGS)
+    const relatedEmail = signer.apply(payloads.ticket, CKEYS.TICKETREGS)
+    if (relatedEmail.email !== payloads.email) {
+      throw new errorHandler.MethodsError(func, 'leak')
+    }
     //
     const pswd = signer.simpleHash(payloads.password, 'default', 512)
     const userDataRef = fire('userdata', hUsername)

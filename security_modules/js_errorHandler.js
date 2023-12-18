@@ -22,7 +22,8 @@ const __ERRLIB = {
     unrecognized: 'invalid username' + ERRS[1],
     alreadyIn: 'already logged in' + ERRS[1],
     alreadyOut: 'already logged out' + ERRS[1],
-    illegal: 'illegal request' + ERRS[1]
+    illegal: 'illegal request' + ERRS[1],
+    leak: 'leaked ticket?' + ERRS[1]
   },
   FireError: {
     documentMissing: 'no document found' + ERRS[2]

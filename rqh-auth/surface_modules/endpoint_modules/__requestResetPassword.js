@@ -5,11 +5,7 @@ const errorHandler = require('../../../security_modules/js_errorHandler')
 const CKEYS = require('../../../security_modules/keys/key-constant.json')
 const mail = require('../js_mail')
 
-// ================= FOR DEPLOYER ===================  //
-// Please change this URL accordingly                  //
-// Read documentation for full instructions            //
-// =================================================== //
-const apiURL = 'https://api1b-be-y2mk2btioa-uc.a.run.app'
+const apiURL = '%%BASH%%:RQH_PUBLIC_URL'
 
 const __endMethod = async (req, h) => {
   const resetPasswordURL = `${apiURL}/reset-password`

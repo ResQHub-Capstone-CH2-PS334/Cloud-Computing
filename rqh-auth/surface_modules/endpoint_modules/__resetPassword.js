@@ -14,7 +14,7 @@ const __endMethod = async (req, h) => {
     //
     await doc.write({ pswd }, { merge: true })
     //
-    return h.response({ status: 'success', description: 'password updaed.' })
+    return h.response({ status: 'success', description: 'password updated' })
   } catch (e) {
     if (errorHandler.isInstancesOf(e)) return h.response(e.readError()).code(502)
     else h.response({ status: 'unknown?', description: `At ${func}()` })
