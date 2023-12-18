@@ -47,10 +47,11 @@ const makeRequest = async ({
   __requiredPayloads
 }, h) => {
   let errPayloads = 0
+
   if (__payloads !== null) {
     errPayloads = internalCheckRequestRequirement(__payloads, __requiredPayloads)
   }
-  if (errPayloads === 0) {
+  if (errPayloads === 0 || errPayloads === '') {
     return h.response(await internalCallBackEnd(__url, __method, __headers, __payloads))
   }
   return h.response({ malformedPayloads: errPayloads })

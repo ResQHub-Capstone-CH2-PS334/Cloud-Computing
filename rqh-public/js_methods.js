@@ -1,6 +1,6 @@
 const utils = require('./js_utils')
 
-const __RQH_AUTH_URL = '%%BASH%%:RQH_AUTH_URL'
+const __RQH_AUTH_URL = 'https://rqh-auth-6old2slxmq-et.a.run.app/'
 const __RQH_CORE_URL = '%%BASH%%:RQH_CORE_URL'
 
 const buildVkey = async (req, h) => {
@@ -94,7 +94,7 @@ const userLogin = async (req, h) => {
 }
 
 const resetPassword = async (req, h) => {
-  const credentials = req.query
+  const { credentials } = req.query
   return await utils.makeRequest({
     __url: __RQH_AUTH_URL + `reset-password?credentials=${credentials}`,
     __headers: null,
