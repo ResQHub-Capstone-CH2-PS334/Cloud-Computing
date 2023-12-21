@@ -36,8 +36,8 @@ const __ERRLIB = {
   },
   MapsError: {
     nothing: 'found nothing' + ERRS[4],
-    unknown: 'unidentified error' + ERRS[0],
-    outage: 'API is expired or not deactivated!'
+    unknown: 'unidentified error' + ERRS[4],
+    outage: 'API is expired, deactivated, or maybe invalid longitude and latitude!' + ERRS[4]
   },
   TranscriberError: {
     invalid: 'invalid audio file'
