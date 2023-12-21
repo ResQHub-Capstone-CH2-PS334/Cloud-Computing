@@ -52,7 +52,12 @@ const makeRequest = async ({
     errPayloads = internalCheckRequestRequirement(__payloads, __requiredPayloads)
   }
   if (errPayloads === 0 || errPayloads === '') {
-    return h.response(await internalCallBackEnd(__url, __method, __headers, __payloads))
+    const internalCallResult = await internalCallBackEnd(__url, __method, __headers, __payloads)
+    if (internalCallResult.dataRender === undefined) {
+      return h.response(internalCallResult)
+    } else {
+      return internalCallResult.dataRender
+    }
   }
   return h.response({ malformedPayloads: errPayloads })
 }

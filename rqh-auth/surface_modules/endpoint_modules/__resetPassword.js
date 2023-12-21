@@ -7,6 +7,7 @@ const CKEYS = require('../../../security_modules/keys/key-constant.json')
 const __endMethod = async (req, h) => {
   const func = '__requestResetPassword'
   const { credentials } = req.query
+  const msg = require('fs').readFileSync('./success.html')
   try {
     const credentialsData = signer.apply(credentials, CKEYS.REQRESETPWD)
     const doc = fire('userdata', credentialsData.hUsername)
@@ -14,10 +15,19 @@ const __endMethod = async (req, h) => {
     //
     await doc.write({ pswd }, { merge: true })
     //
-    return h.response({ status: 'success', description: 'password updated' })
+    return h.response({
+      dataRender: msg.toString()
+        .replace('xxx', 'Password Reset Credentials Applied')
+        .replace('xxxx', 'Your password has successfully updated!')
+    })
   } catch (e) {
-    if (errorHandler.isInstancesOf(e)) return h.response(e.readError()).code(502)
-    else h.response({ status: 'unknown?', description: `At ${func}()` })
+    if (errorHandler.isInstancesOf(e)) {
+      return h.response({
+        dataRender: msg.toString()
+          .replace('xxx', 'Password Reset Credentials Expired / Invalid.')
+          .replace('xxxx', 'Please request again.')
+      })
+    } else { h.response({ status: 'unknown?', description: `At ${func}()` }) }
   }
 }
 

@@ -5,11 +5,16 @@ const imagePreprocess = async (__req, __imgSize) => {
   const images = [__req.payload.fromID, __req.payload.fromLive]
   const processedImgBuffer = []
   for (let i = 0; i < 2; i++) {
-    const img = { image: { content: images[i] } }
+    const img = {
+      image: { content: images[i] },
+      features: [{
+        type: 'FACE_DETECTION'
+      }]
+    }
     const client = new vision.ImageAnnotatorClient({
       keyFilename: 'surface_modules/endpoint_modules/keys/key-cvision.json'
     })
-    const [result] = await client.faceDetection(img)
+    const [result] = await client.annotateImage(img)
     const faces = result.faceAnnotations
     let faceBoundingBoxPoints = 0
 

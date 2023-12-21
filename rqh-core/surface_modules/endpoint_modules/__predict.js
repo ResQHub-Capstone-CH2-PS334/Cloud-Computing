@@ -3,7 +3,7 @@ const errorHandler = require('../../../security_modules/js_errorHandler')
 const { imagePreprocess } = require('./func_imagePreprocess')
 const { predictSimilarity } = require('./func_predictSimilarity')
 
-const INDEV = false
+const INDEV = true
 
 const __endMethod = async (req, h) => {
   const func = '__getStation'
@@ -12,8 +12,11 @@ const __endMethod = async (req, h) => {
       sessionHandler.isLegal(req, 'at')
       await sessionHandler.validateRequest(req)
     }
+    console.log('pass#1')
     const preprocessedImageBuffers = await imagePreprocess(req, 120)
+    console.log('pass#2')
     const similarityScore = await predictSimilarity(preprocessedImageBuffers)
+    console.log('pass#3')
     return h.response({ status: 'success', similarity: similarityScore })
   } catch (e) {
     console.log(e)

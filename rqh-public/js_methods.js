@@ -1,7 +1,10 @@
 const utils = require('./js_utils')
 
-const __RQH_AUTH_URL = '%%BASH%%:RQH_AUTH_URL'
-const __RQH_CORE_URL = '%%BASH%%:RQH_CORE_URL'
+// const __RQH_AUTH_URL = '%%BASH%%:RQH_AUTH_URL'
+// const __RQH_CORE_URL = '%%BASH%%:RQH_CORE_URL'
+
+const __RQH_AUTH_URL = 'https://rqh-auth-xrlwjzgk6a-et.a.run.app/'
+const __RQH_CORE_URL = 'https://rqh-core-xrlwjzgk6a-et.a.run.app/'
 
 const buildVkey = async (req, h) => {
   return await utils.makeRequest({
@@ -120,7 +123,8 @@ const transcribe = async (req, h) => {
     __headers: utils.getHeaders(req, ['appkey', 'at']),
     __method: 'POST',
     __payloads: req.payload,
-    __requiredPayloads: ['audioFile', 'filename']
+    __requiredPayloads: ['audioFile', 'filename'],
+    __isMultipart: true
   }, h)
 }
 

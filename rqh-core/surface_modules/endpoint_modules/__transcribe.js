@@ -26,7 +26,6 @@ const __endMethod = async (req, h) => {
     const activeSession = jsonAT.activeSession
     const payloads = req.payload
     const audioData = payloads.audioFile
-    console.log(audioData)
     const recordingName = payloads.filename
     const storage = new Storage({
       credentials: storageKey,
@@ -53,6 +52,7 @@ const __endMethod = async (req, h) => {
     })
     //
     try {
+      console.log('v3')
       const p = await transcriber.transcribe(url)
       const audio = { content: p }
       const config = { encoding: 'LINEAR16', sampleRateHertz: 16000, languageCode: 'id-ID' }
