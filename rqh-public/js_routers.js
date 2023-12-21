@@ -4,7 +4,10 @@ const routers = [
   {
     method: 'GET',
     path: '/',
-    handler: (req, h) => { return 1 }
+    handler: (req, h) => {
+      const text = require('fs').readFileSync('welcome.html')
+      return text.toString()
+    }
   },
   {
     method: 'POST',
