@@ -5,7 +5,10 @@ const errorHandler = require('../../../security_modules/js_errorHandler')
 const CKEYS = require('../../../security_modules/keys/key-constant.json')
 const mail = require('../js_mail')
 
+// ********* UNDER BASH COMMAND INFLUENCE *********
+// ********* DO NOT MODIFY! ***********************
 const apiURL = '%%BASH%%:RQH_PUBLIC_URL'
+// ************************************************
 
 const __endMethod = async (req, h) => {
   const resetPasswordURL = `${apiURL}/reset-password`

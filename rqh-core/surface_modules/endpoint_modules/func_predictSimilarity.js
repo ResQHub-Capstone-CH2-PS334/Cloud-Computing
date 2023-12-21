@@ -2,9 +2,6 @@ const tf = require('@tensorflow/tfjs-node')
 const MODELPATH = 'file://surface_modules/endpoint_modules/ml_model_alternative/model.json'
 
 const predictSimilarity = async (__imageBuffers) => {
-  const fs = require('fs')
-  fs.writeFileSync('a.jpeg', __imageBuffers[0])
-  fs.writeFileSync('b.jpeg', __imageBuffers[1])
   const image0 = new Uint8Array(__imageBuffers[0])
   const image1 = new Uint8Array(__imageBuffers[1])
 
