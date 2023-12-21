@@ -1,8 +1,8 @@
 const nodemailer = require('nodemailer')
 const fs = require('fs/promises')
 
-const __serviceEmail = 'raihansyah.harahap@gmail.com'
-const __servicePassword = 'qlpy bkwf vpjj revt'
+const __serviceEmail = 'rai.machine.learning.explore@gmail.com'
+const __servicePassword = 'qyor eyjk frwr jkgn'
 
 const mailVerificaionKey = async (email, vkey) => {
   const __htmlPath = './verifEmail.html'
