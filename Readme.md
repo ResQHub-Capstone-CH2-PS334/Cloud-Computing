@@ -1,7 +1,7 @@
 # Version 3
 🔥🔥 Please refer to this FULL DOCUMENTATION:
 
-https://storage.googleapis.com/handsome-dracula/documentation/premldocs.pdf
+https://storage.googleapis.com/handsome-dracula/documentation/preapis.pdf
 ## ➡️ Changes
 Version 3
 - Final rqh-auth API and rqh-core API
